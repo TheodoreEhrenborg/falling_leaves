@@ -134,7 +134,7 @@ view model =
       :: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
       ++ List.map (renderCircle "red") model.snake.tail
       ++ [ renderCircle "purple" model.snake.head ]
-      ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Score: " ++ (String.fromInt model.score))]
+      ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
          , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          ]
       ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
