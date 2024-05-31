@@ -32,6 +32,7 @@ type alias Model =
   , score : Int
   , highScore : Int
   , mostRecentKey : String
+  , position: Int
   }
 
 initGame : State -> Int -> (Model, Cmd Msg)
@@ -46,6 +47,7 @@ initGame initialState highScore =
     , snake = initSnake
     , prize = Nothing
     , score = 0
+    , position = 0
     , highScore = highScore
     , mostRecentKey = "No keys yet"
     }
@@ -88,13 +90,13 @@ update msg model =
 
       PlacePrize  pos ->
         ( { model | prize = pos }, Cmd.none )
-      Key str -> ( { model | mostRecentKey = str }, Cmd.none )
+      Key str -> ( { model | mostRecentKey = str, position = model.position +1 }, Cmd.none )
     else
       case msg of
         PointerDownAt _ -> if (model.gameTicks >= 0) then initGame Active model.highScore else ( model, Cmd.none )
         Tick time ->
           ({ model | gameTicks = model.gameTicks + 1}, Cmd.none )
-        Key str -> ( { model | mostRecentKey = str }, Cmd.none )
+        Key str -> ( { model | mostRecentKey = str, position = model.position +1 }, Cmd.none )
         _ -> ( model, Cmd.none )
 
 isLegalState : NonEmptyList Position -> Bool
@@ -141,7 +143,7 @@ view model =
       :: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
       ++ List.map (renderCircle "red") model.snake.tail
       ++ [ renderCircle "purple" model.snake.head ]
-      ++ [ image [x "50", y (String.fromInt model.gameTicks), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
+      ++ [ image [x "50", y (String.fromInt model.position), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
       ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
                ,
                text_ [ x "5", y "40", Svg.Attributes.style "fill: white"] [ text ("Recent key " ++ (model.mostRecentKey))]
