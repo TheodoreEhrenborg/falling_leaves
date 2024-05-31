@@ -124,7 +124,7 @@ pointerOffsetToDirection eventOffset currentDirection snakeHead =
 -- SUBSCRIPTIONS
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.batch
-        [ Browser.Events.onKeyPress keyDecoder
+        [ Browser.Events.onKeyDown keyDecoder
         , Time.every tickFrequency Tick
         ]
 
