@@ -150,7 +150,7 @@ view model =
       :: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
       ++ List.map (renderCircle "red") model.snake.tail
       ++ [ renderCircle "purple" model.snake.head ]
-      ++ [ image [x "50", y (String.fromInt model.position), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
+      ++ [ image [x (String.fromInt model.position), y (String.fromInt (gridSize.height * cellSize.height-50)), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
       ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
          , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          ]
