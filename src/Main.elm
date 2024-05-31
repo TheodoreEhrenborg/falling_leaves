@@ -147,14 +147,15 @@ view model =
       , Svg.Attributes.style "touch-action: none"
       ]
       (  rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height))] []
-      :: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
-      ++ List.map (renderCircle "red") model.snake.tail
-      ++ [ renderCircle "purple" model.snake.head ]
+      --:: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
+      :: []
+      --++ List.map (renderCircle "red") model.snake.tail
+      --++ [ renderCircle "purple" model.snake.head ]
       ++ [ image [x (String.fromInt model.position), y (String.fromInt (gridSize.height * cellSize.height-50)), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
-      ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
-         , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
-         ]
-      ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
+     -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+      --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
+       --  ]
+      -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
       )
 
 renderCircle : String -> Position -> Html Msg
