@@ -23,6 +23,8 @@ initialSnakeLength = 20
 -- MODEL
 type State = Active | Inactive
 
+type WhichKey = LeftArrow | RightArrow | OtherKey
+
 type alias Model =
   { state : State
   , gameTicks : Int
@@ -31,7 +33,6 @@ type alias Model =
   , prize : (Maybe Position)
   , score : Int
   , highScore : Int
-  , mostRecentKey : String
   , position: Int
   }
 
@@ -49,7 +50,6 @@ initGame initialState highScore =
     , score = 0
     , position = 0
     , highScore = highScore
-    , mostRecentKey = "No keys yet"
     }
   , if (initialState == Active) then placePrize initSnake else Cmd.none
   )
@@ -58,7 +58,7 @@ init : () -> (Model, Cmd Msg)
 init _ = initGame Inactive 0
 
 -- UPDATE
-type Msg = Tick Time.Posix | PlacePrize (Maybe Position) | PointerDownAt ( Float, Float ) | Key String
+type Msg = Tick Time.Posix | PlacePrize (Maybe Position) | PointerDownAt ( Float, Float ) | Key WhichKey
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -90,14 +90,21 @@ update msg model =
 
       PlacePrize  pos ->
         ( { model | prize = pos }, Cmd.none )
-      Key str -> ( { model | mostRecentKey = str, position = model.position +1 }, Cmd.none )
+      Key whichKey -> ( { model | position = model.position +getShift whichKey }, Cmd.none )
     else
       case msg of
         PointerDownAt _ -> if (model.gameTicks >= 0) then initGame Active model.highScore else ( model, Cmd.none )
         Tick time ->
           ({ model | gameTicks = model.gameTicks + 1}, Cmd.none )
-        Key str -> ( { model | mostRecentKey = str, position = model.position +1 }, Cmd.none )
+        Key whichKey -> ( { model | position = model.position + getShift whichKey }, Cmd.none )
         _ -> ( model, Cmd.none )
+
+getShift : WhichKey -> Int
+getShift key = let scale = 20 in
+                case key of
+                   LeftArrow -> -scale
+                   RightArrow -> scale
+                   OtherKey -> 0
 
 isLegalState : NonEmptyList Position -> Bool
 isLegalState snake = (isInGrid gridSize snake.head) && not (List.member snake.head snake.tail)
@@ -145,8 +152,6 @@ view model =
       ++ [ renderCircle "purple" model.snake.head ]
       ++ [ image [x "50", y (String.fromInt model.position), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
       ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
-               ,
-               text_ [ x "5", y "40", Svg.Attributes.style "fill: white"] [ text ("Recent key " ++ (model.mostRecentKey))]
          , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          ]
       ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
@@ -167,4 +172,8 @@ keyDecoder =
   Decode.map toDirection (Decode.field "key" Decode.string)
 
 toDirection : String -> Msg
-toDirection string = Key string
+toDirection string =
+    case string of
+        "ArrowLeft" -> Key LeftArrow
+        "ArrowRight" -> Key RightArrow
+        _ -> Key OtherKey
