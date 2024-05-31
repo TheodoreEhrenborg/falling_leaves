@@ -1,4 +1,5 @@
 module Main exposing (..)
+import Json.Decode as Decode
 import Browser
 import Browser.Events
 import Html exposing (Html)
@@ -30,6 +31,7 @@ type alias Model =
   , prize : (Maybe Position)
   , score : Int
   , highScore : Int
+  , mostRecentKey : String
   }
 
 initGame : State -> Int -> (Model, Cmd Msg)
@@ -45,6 +47,7 @@ initGame initialState highScore =
     , prize = Nothing
     , score = 0
     , highScore = highScore
+    , mostRecentKey = "No keys yet"
     }
   , if (initialState == Active) then placePrize initSnake else Cmd.none
   )
@@ -53,7 +56,7 @@ init : () -> (Model, Cmd Msg)
 init _ = initGame Inactive 0
 
 -- UPDATE
-type Msg = Tick Time.Posix | PlacePrize (Maybe Position) | PointerDownAt ( Float, Float )
+type Msg = Tick Time.Posix | PlacePrize (Maybe Position) | PointerDownAt ( Float, Float ) | Key String
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -85,12 +88,13 @@ update msg model =
 
       PlacePrize  pos ->
         ( { model | prize = pos }, Cmd.none )
-
+      Key str -> ( { model | mostRecentKey = str }, Cmd.none )
     else
       case msg of
         PointerDownAt _ -> if (model.gameTicks >= 0) then initGame Active model.highScore else ( model, Cmd.none )
         Tick time ->
           ({ model | gameTicks = model.gameTicks + 1}, Cmd.none )
+        Key str -> ( { model | mostRecentKey = str }, Cmd.none )
         _ -> ( model, Cmd.none )
 
 isLegalState : NonEmptyList Position -> Bool
@@ -119,7 +123,10 @@ pointerOffsetToDirection eventOffset currentDirection snakeHead =
 
 -- SUBSCRIPTIONS
 subscriptions : Model -> Sub Msg
-subscriptions model = Time.every tickFrequency Tick
+subscriptions model = Sub.batch
+        [ Browser.Events.onKeyPress keyDecoder
+        , Time.every tickFrequency Tick
+        ]
 
 -- VIEW
 view : Model -> Html Msg
@@ -136,6 +143,8 @@ view model =
       ++ [ renderCircle "purple" model.snake.head ]
       ++ [ image [x "50", y (String.fromInt model.gameTicks), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
       ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+               ,
+               text_ [ x "5", y "40", Svg.Attributes.style "fill: white"] [ text ("Recent key " ++ (model.mostRecentKey))]
          , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          ]
       ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
@@ -150,3 +159,10 @@ renderCircle color pos =
          ] []
 
 -- https://github.com/MartinSnyder/elm-snake
+
+keyDecoder : Decode.Decoder Msg
+keyDecoder =
+  Decode.map toDirection (Decode.field "key" Decode.string)
+
+toDirection : String -> Msg
+toDirection string = Key string
