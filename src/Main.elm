@@ -159,9 +159,13 @@ update msg model =
                 nextSnake =
                     NonEmptyList nextHead nextTail
 
+                movedLeaves = List.map applyGravity model.leaves
+
+                nonEatenLeaves = List.filter (isFar model.koala) movedLeaves
+
                 nextModel =
                     { model
-                        | leaves = List.map applyGravity model.leaves
+                        | leaves = nonEatenLeaves
                         , snake = nextSnake
                         , score = nextScore
                         , highScore = Basics.max nextScore model.highScore
@@ -189,6 +193,9 @@ update msg model =
             in
             ( { model | koala = newKoala }, Cmd.none )
 
+isFar : Position2 -> Position2 -> Bool
+isFar koala leaf = let distance = 30 in
+                   abs (koala.x-leaf.x) > distance || abs (koala.y-leaf.y) > distance
 
 getShift : WhichKey -> Int
 getShift key =
