@@ -42,11 +42,6 @@ initialSnakeLength =
 -- MODEL
 
 
-type State
-    = Active
-    | Inactive
-
-
 type WhichKey
     = LeftArrow
     | RightArrow
@@ -61,8 +56,7 @@ type alias Position2 =
 
 
 type alias Model =
-    { state : State
-    , gameTicks : Int
+    { gameTicks : Int
     , direction : Direction
     , snake : NonEmptyList Position
     , prize : Maybe Position
@@ -77,8 +71,8 @@ gravity =
     1
 
 
-initGame : State -> Int -> ( Model, Cmd Msg )
-initGame initialState highScore =
+initGame : Int -> ( Model, Cmd Msg )
+initGame highScore =
     let
         head =
             computeGridCenter gridSize
@@ -86,8 +80,7 @@ initGame initialState highScore =
         initSnake =
             NonEmptyList head (List.repeat (initialSnakeLength - 1) head)
     in
-    ( { state = initialState
-      , gameTicks = 0
+    ( { gameTicks = 0
       , direction = Up
       , snake = initSnake
       , prize = Nothing
@@ -96,17 +89,13 @@ initGame initialState highScore =
       , position = 0
       , highScore = highScore
       }
-    , if initialState == Active then
-        placePrize initSnake
-
-      else
-        Cmd.none
+    , Cmd.none
     )
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    initGame Inactive 0
+    initGame 0
 
 
 
@@ -137,93 +126,61 @@ applyGravity leaf =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    if model.state == Active then
-        case msg of
-            PointerDownAt offsetPos ->
-                ( { model | direction = pointerOffsetToDirection offsetPos model.direction model.snake.head }
-                , Cmd.none
-                )
+    case msg of
+        PointerDownAt offsetPos ->
+            ( { model | direction = pointerOffsetToDirection offsetPos model.direction model.snake.head }
+            , Cmd.none
+            )
 
-            Tick time ->
-                let
-                    nextHead =
-                        adjustPosition model.snake.head model.direction
+        Tick time ->
+            let
+                nextHead =
+                    adjustPosition model.snake.head model.direction
 
-                    atePrize =
-                        Just nextHead == model.prize
+                atePrize =
+                    Just nextHead == model.prize
 
-                    nextScore =
-                        if atePrize then
-                            model.score + 1
+                nextScore =
+                    if atePrize then
+                        model.score + 1
 
-                        else
-                            model.score
+                    else
+                        model.score
 
-                    nextTail =
-                        model.snake.head
-                            :: (if atePrize then
-                                    model.snake.tail
+                nextTail =
+                    model.snake.head
+                        :: (if atePrize then
+                                model.snake.tail
 
-                                else
-                                    stripLast model.snake.tail
-                               )
+                            else
+                                stripLast model.snake.tail
+                           )
 
-                    nextSnake =
-                        NonEmptyList nextHead nextTail
+                nextSnake =
+                    NonEmptyList nextHead nextTail
 
-                    nextState =
-                        if isLegalState nextSnake then
-                            Active
+                nextModel =
+                    { model
+                        | leaves = List.map applyGravity model.leaves
+                        , snake = nextSnake
+                        , score = nextScore
+                        , highScore = Basics.max nextScore model.highScore
+                        , gameTicks = model.gameTicks + 1
+                    }
+            in
+            ( nextModel
+            , if atePrize then
+                placePrize nextSnake
 
-                        else
-                            Inactive
+              else
+                Cmd.none
+            )
 
-                    nextModel =
-                        { model
-                            | state = nextState
-                            , leaves = List.map applyGravity model.leaves
-                            , snake = nextSnake
-                            , score = nextScore
-                            , highScore = Basics.max nextScore model.highScore
-                            , gameTicks =
-                                if nextState == Active then
-                                    model.gameTicks + 1
+        PlacePrize pos ->
+            ( { model | prize = pos }, Cmd.none )
 
-                                else
-                                    (-1000 // tickFrequency) // 2
-                        }
-                in
-                ( nextModel
-                , if atePrize then
-                    placePrize nextSnake
-
-                  else
-                    Cmd.none
-                )
-
-            PlacePrize pos ->
-                ( { model | prize = pos }, Cmd.none )
-
-            Key whichKey ->
-                ( { model | position = model.position + getShift whichKey }, Cmd.none )
-
-    else
-        case msg of
-            PointerDownAt _ ->
-                if model.gameTicks >= 0 then
-                    initGame Active model.highScore
-
-                else
-                    ( model, Cmd.none )
-
-            Tick time ->
-                ( { model | gameTicks = model.gameTicks + 1 }, Cmd.none )
-
-            Key whichKey ->
-                ( { model | position = model.position + getShift whichKey }, Cmd.none )
-
-            _ ->
-                ( model, Cmd.none )
+        Key whichKey ->
+            ( { model | position = model.position + getShift whichKey }, Cmd.none )
 
 
 getShift : WhichKey -> Int
