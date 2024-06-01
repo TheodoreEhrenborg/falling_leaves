@@ -25,16 +25,25 @@ type State = Active | Inactive
 
 type WhichKey = LeftArrow | RightArrow | OtherKey
 
+type alias Position2 = {
+        x: Int,
+        y: Int,
+        y_vel : Int
+    }
+
 type alias Model =
   { state : State
   , gameTicks : Int
   , direction : Direction
   , snake : NonEmptyList Position
   , prize : (Maybe Position)
+  , leaves: List Position2
   , score : Int
   , highScore : Int
   , position: Int
   }
+
+gravity = 1
 
 initGame : State -> Int -> (Model, Cmd Msg)
 initGame initialState highScore =
@@ -47,6 +56,7 @@ initGame initialState highScore =
     , direction = Up
     , snake = initSnake
     , prize = Nothing
+    , leaves = [Position2 1 20 0, Position2 100 20 0]
     , score = 0
     , position = 0
     , highScore = highScore
@@ -59,6 +69,15 @@ init _ = initGame Inactive 0
 
 -- UPDATE
 type Msg = Tick Time.Posix | PlacePrize (Maybe Position) | PointerDownAt ( Float, Float ) | Key WhichKey
+
+applyGravity: Position2 -> Position2
+applyGravity leaf =
+    let new_y = leaf.y + leaf.y_vel
+        new_y_vel = leaf.y_vel + gravity
+    in
+        {leaf |
+           y = new_y,
+           y_vel = new_y_vel}
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -80,6 +99,7 @@ update msg model =
           nextModel =
             { model
               | state = nextState
+              , leaves = List.map applyGravity model.leaves
               , snake = nextSnake
               , score = nextScore
               , highScore = Basics.max nextScore model.highScore
@@ -150,6 +170,7 @@ view model =
       --:: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
       :: []
       --++ List.map (renderCircle "red") model.snake.tail
+      ++ List.map (renderCircle2 ) model.leaves
       --++ [ renderCircle "purple" model.snake.head ]
       ++ [ image [x (String.fromInt model.position), y (String.fromInt (gridSize.height * cellSize.height-50)), width "50px" ,height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg"] [] ]
      -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
@@ -157,6 +178,14 @@ view model =
        --  ]
       -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
       )
+
+renderCircle2 : Position2 -> Html Msg
+renderCircle2 pos =
+  circle [ cx (String.fromInt (pos.x))
+         , cy (String.fromInt (pos.y))
+         , r (String.fromInt 10)
+         , fill "green"
+         ] []
 
 renderCircle : String -> Position -> Html Msg
 renderCircle color pos =
