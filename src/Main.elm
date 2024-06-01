@@ -63,7 +63,7 @@ type alias Model =
     , leaves : List Position2
     , score : Int
     , highScore : Int
-    , position : Int
+    , koala : Position2
     }
 
 
@@ -86,7 +86,7 @@ initGame highScore =
       , prize = Nothing
       , leaves = [ Position2 1 20 0, Position2 100 20 0 ]
       , score = 0
-      , position = 0
+      , koala = Position2 0 (gridSize.height * cellSize.height - 50) 0
       , highScore = highScore
       }
     , Cmd.none
@@ -180,7 +180,14 @@ update msg model =
             ( { model | prize = pos }, Cmd.none )
 
         Key whichKey ->
-            ( { model | position = model.position + getShift whichKey }, Cmd.none )
+            let
+                koala =
+                    model.koala
+
+                newKoala =
+                    { koala | x = koala.x + getShift whichKey }
+            in
+            ( { model | koala = newKoala }, Cmd.none )
 
 
 getShift : WhichKey -> Int
@@ -277,7 +284,7 @@ view model =
             --++ List.map (renderCircle "red") model.snake.tail
             ++ List.map renderCircle2 model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
-            ++ [ image [ x (String.fromInt model.position), y (String.fromInt (gridSize.height * cellSize.height - 50)), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
+            ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
          -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
          --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          --  ]
