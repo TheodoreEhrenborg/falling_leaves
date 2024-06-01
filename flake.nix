@@ -16,6 +16,7 @@
           devShells.default = mkShell {
             packages = [
 			elmPackages.elm
+      elmPackages.elm-format
                           ];
           };
         }
