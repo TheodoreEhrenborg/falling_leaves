@@ -161,9 +161,11 @@ update msg model =
                 nextSnake =
                     NonEmptyList nextHead nextTail
 
-                movedLeaves = List.map applyGravity model.leaves
+                movedLeaves =
+                    List.map applyGravity model.leaves
 
-                nonEatenLeaves = List.filter (isFar model.koala) movedLeaves
+                nonEatenLeaves =
+                    List.filter (isFar model.koala) movedLeaves
 
                 nextModel =
                     { model
@@ -192,13 +194,20 @@ update msg model =
 
                 newKoala =
                     { koala | x = koala.x + getShift whichKey }
+
                 --dummy = Debug.log "koala position" newKoala
             in
             ( { model | koala = newKoala }, Cmd.none )
 
+
 isFar : Position2 -> Position2 -> Bool
-isFar koala leaf = let distance = 30 in
-                   abs (koala.x-leaf.x) > distance || abs (koala.y-leaf.y) > distance
+isFar koala leaf =
+    let
+        distance =
+            30
+    in
+    abs (koala.x - leaf.x) > distance || abs (koala.y - leaf.y) > distance
+
 
 getShift : WhichKey -> Int
 getShift key =
@@ -295,9 +304,9 @@ view model =
             ++ List.map renderCircle2 model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
-         -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
-          ++ [ text_ [ x "300", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text ("Left")]]
-          ++ [ text_ [ x "400", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text ("Right")]]
+            -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+            ++ [ text_ [ x "300", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "Left" ] ]
+            ++ [ text_ [ x "400", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "Right" ] ]
          --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          --  ]
          -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
