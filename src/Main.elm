@@ -10,6 +10,7 @@ import NonEmptyList as NEL exposing (NonEmptyList)
 import Random
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
+import Svg.Events exposing (onClick)
 import Time
 import Util exposing (..)
 
@@ -128,6 +129,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         PointerDownAt offsetPos ->
+            --let dummy = Debug.log "dump tuple" offsetPos in
             ( { model | direction = pointerOffsetToDirection offsetPos model.direction model.snake.head }
             , Cmd.none
             )
@@ -190,6 +192,7 @@ update msg model =
 
                 newKoala =
                     { koala | x = koala.x + getShift whichKey }
+                --dummy = Debug.log "koala position" newKoala
             in
             ( { model | koala = newKoala }, Cmd.none )
 
@@ -293,6 +296,8 @@ view model =
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
          -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+          ++ [ text_ [ x "300", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text ("Left")]]
+          ++ [ text_ [ x "400", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text ("Right")]]
          --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          --  ]
          -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
