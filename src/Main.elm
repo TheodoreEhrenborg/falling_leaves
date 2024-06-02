@@ -26,18 +26,22 @@ type alias Size =
     }
 
 
+gridSize : Size
 gridSize =
     Size 40 20
 
 
+cellSize : Size
 cellSize =
     Size 20 20
 
 
+tickFrequency : Float
 tickFrequency =
     100
 
 
+gravity : Int
 gravity =
     1
 
@@ -88,7 +92,7 @@ init _ =
 
 
 type Msg
-    = Tick Time.Posix
+    = Tick
     | Key WhichKey
     | PlaceLeaf Int
 
@@ -111,7 +115,7 @@ applyGravity leaf =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Tick _ ->
+        Tick ->
             let
                 movedLeaves =
                     List.map applyGravity model.leaves
@@ -193,7 +197,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
-        , Time.every tickFrequency Tick
+        , Time.every tickFrequency (\_ -> Tick)
         ]
 
 
@@ -201,6 +205,7 @@ subscriptions model =
 -- VIEW
 
 
+str : Int -> String
 str =
     String.fromInt
 
