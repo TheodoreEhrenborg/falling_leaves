@@ -6,12 +6,13 @@ import Html exposing (Html)
 import Json.Decode as Decode
 import List exposing (length)
 import Random
-import Svg exposing (..)
-import Svg.Attributes exposing (..)
+import Svg exposing (circle, ellipse, image, rect, svg, text, text_)
+import Svg.Attributes exposing (cx, cy, fill, fontSize, height, r, rx, ry, viewBox, width, x, xlinkHref, y)
 import Svg.Events exposing (onClick)
 import Time
 
 
+main : Program () Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
@@ -194,7 +195,7 @@ generateLeaf =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
         , Time.every tickFrequency (\_ -> Tick)
