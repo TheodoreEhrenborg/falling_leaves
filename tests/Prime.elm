@@ -1,7 +1,6 @@
-module Prime exposing (..)
+module Prime exposing (suite)
 
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
+import Expect
 import Main exposing (..)
 import Test exposing (..)
 

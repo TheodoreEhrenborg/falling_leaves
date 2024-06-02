@@ -1,4 +1,4 @@
-module Grid exposing (..)
+module Grid exposing (Direction(..), Offset, Position, Size, adjustPosition, computeGridCenter)
 
 
 type Direction
@@ -55,27 +55,3 @@ adjustPosition pos dir =
 computeGridCenter : Size -> Position
 computeGridCenter size =
     Position (size.width // 2) (size.height // 2)
-
-
-computePointsInGrid : Size -> List Position
-computePointsInGrid size =
-    let
-        allX =
-            List.range 0 (size.width - 1)
-
-        allY =
-            List.range 0 (size.height - 1)
-    in
-    List.concatMap (\x -> List.map (\y -> Position x y) allY) allX
-
-
-isInGrid : Size -> Position -> Bool
-isInGrid size pos =
-    pos.x
-        >= 0
-        && pos.y
-        >= 0
-        && pos.x
-        < size.width
-        && pos.y
-        < size.height

@@ -1,14 +1,4 @@
-module Util exposing (..)
-
-
-maybeToList : Maybe a -> List a
-maybeToList maybe =
-    case maybe of
-        Just a ->
-            [ a ]
-
-        Nothing ->
-            []
+module Util exposing (stripLast)
 
 
 stripLast : List a -> List a

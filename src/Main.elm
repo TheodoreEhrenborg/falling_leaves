@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Model, Msg(..), Position2, WhichKey(..), isPrime, main)
 
 import Browser
 import Browser.Events
@@ -7,7 +7,7 @@ import Html exposing (Html)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as Decode
 import List exposing (length)
-import NonEmptyList as NEL exposing (NonEmptyList)
+import NonEmptyList exposing (NonEmptyList)
 import Random
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
@@ -106,7 +106,6 @@ init _ =
 
 type Msg
     = Tick Time.Posix
-    | PlacePrize (Maybe Position)
     | PointerDownAt ( Float, Float )
     | Key WhichKey
     | PlaceLeaf Int
@@ -136,7 +135,7 @@ update msg model =
             , Cmd.none
             )
 
-        Tick time ->
+        Tick _ ->
             let
                 nextHead =
                     adjustPosition model.snake.head model.direction
@@ -186,9 +185,6 @@ update msg model =
                 Cmd.none
             )
 
-        PlacePrize pos ->
-            ( { model | prize = pos }, Cmd.none )
-
         PlaceLeaf pos ->
             ( { model | leaves = Position2 pos 20 0 :: model.leaves }, Cmd.none )
 
@@ -231,29 +227,9 @@ getShift key =
             0
 
 
-isLegalState : NonEmptyList Position -> Bool
-isLegalState snake =
-    isInGrid gridSize snake.head && not (List.member snake.head snake.tail)
-
-
 generateLeaf : Cmd Msg
 generateLeaf =
     Random.generate PlaceLeaf (Random.int 0 (cellSize.width * gridSize.width))
-
-
-placePrize : NonEmptyList Position -> Cmd Msg
-placePrize snake =
-    let
-        allPoints =
-            computePointsInGrid gridSize
-
-        snakePoints =
-            NEL.toList snake
-
-        validPoints =
-            List.filter (\p -> not (List.member p snakePoints)) allPoints
-    in
-    Random.generate PlacePrize (Random.map (\i -> List.head (List.drop i validPoints)) (Random.int 0 (List.length validPoints - 1)))
 
 
 pointerOffsetToDirection : ( Float, Float ) -> Direction -> Position -> Direction
@@ -261,25 +237,28 @@ pointerOffsetToDirection eventOffset currentDirection snakeHead =
     let
         ( eventX, eventY ) =
             eventOffset
-
-        dx =
-            eventX - ((toFloat snakeHead.x + 0.5) * toFloat cellSize.width)
-
-        dy =
-            eventY - ((toFloat snakeHead.y + 0.5) * toFloat cellSize.height)
     in
     if currentDirection == Up || currentDirection == Down then
+        let
+            dx =
+                eventX - ((toFloat snakeHead.x + 0.5) * toFloat cellSize.width)
+        in
         if dx < 0 then
             Left
 
         else
             Right
 
-    else if dy < 0 then
-        Up
-
     else
-        Down
+        let
+            dy =
+                eventY - ((toFloat snakeHead.y + 0.5) * toFloat cellSize.height)
+        in
+        if dy < 0 then
+            Up
+
+        else
+            Down
 
 
 
@@ -313,9 +292,7 @@ view model =
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
             --:: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
-            :: []
-            --++ List.map (renderCircle "red") model.snake.tail
-            ++ List.map (renderCircle2 "green" 10) model.leaves
+            :: List.map (renderCircle2 "green" 10) model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             --            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
@@ -326,9 +303,7 @@ view model =
                 else
                     []
                )
-            ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
-            ++ [ text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
-            ++ [ text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
+            ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
          --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
          --  ]
          -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
@@ -341,17 +316,6 @@ renderCircle2 color radius pos =
         [ cx (String.fromInt pos.x)
         , cy (String.fromInt pos.y)
         , r (String.fromInt radius)
-        , fill color
-        ]
-        []
-
-
-renderCircle : String -> Position -> Html Msg
-renderCircle color pos =
-    circle
-        [ cx (String.fromInt ((pos.x * cellSize.width) + (cellSize.width // 2)))
-        , cy (String.fromInt ((pos.y * cellSize.height) + (cellSize.height // 2)))
-        , r (String.fromInt (cellSize.height // 2))
         , fill color
         ]
         []
