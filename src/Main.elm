@@ -4,7 +4,6 @@ import Browser
 import Browser.Events
 import Grid exposing (..)
 import Html exposing (Html)
-import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as Decode
 import List exposing (length)
 import Random
@@ -91,7 +90,6 @@ init _ =
 
 type Msg
     = Tick Time.Posix
-    | PointerDownAt ( Float, Float )
     | Key WhichKey
     | PlaceLeaf Int
 
@@ -114,11 +112,6 @@ applyGravity leaf =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PointerDownAt _ ->
-            ( model
-            , Cmd.none
-            )
-
         Tick _ ->
             let
                 movedLeaves =
@@ -220,7 +213,6 @@ view model =
         [ width "100%"
         , height "auto"
         , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
-        , Pointer.onDown (\event -> PointerDownAt event.pointer.offsetPos)
         , Svg.Attributes.style "touch-action: none"
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
