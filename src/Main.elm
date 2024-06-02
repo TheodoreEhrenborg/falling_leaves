@@ -38,6 +38,10 @@ tickFrequency =
     100
 
 
+gravity =
+    1
+
+
 
 -- MODEL
 
@@ -59,22 +63,16 @@ type alias Model =
     { gameTicks : Int
     , leaves : List Position
     , score : Int
-    , highScore : Int
     , koala : Position
     }
 
 
-gravity =
-    1
-
-
-initGame : Int -> ( Model, Cmd Msg )
-initGame highScore =
+initGame : ( Model, Cmd Msg )
+initGame =
     ( { gameTicks = 0
       , leaves = []
       , score = 0
       , koala = Position 0 (gridSize.height * cellSize.height - 50) 0
-      , highScore = highScore
       }
     , Cmd.none
     )
@@ -82,7 +80,7 @@ initGame highScore =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    initGame 0
+    initGame
 
 
 
@@ -131,7 +129,6 @@ update msg model =
                     { model
                         | leaves = nonEatenLeaves
                         , score = nextScore
-                        , highScore = Basics.max nextScore model.highScore
                         , gameTicks = model.gameTicks + 1
                     }
             in
