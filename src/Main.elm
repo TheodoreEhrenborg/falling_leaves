@@ -180,10 +180,6 @@ update msg model =
             in
             ( nextModel
             , if modBy 10 model.gameTicks == 0 then
-                let
-                    dummy =
-                        Debug.log "generating leaf" model.gameTicks
-                in
                 generateLeaf
 
               else
@@ -318,7 +314,7 @@ view model =
             ++ List.map renderCircle2 model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
-            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
+            --            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
             ++ [ text_ [ x "370", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
             ++ [ text_ [ x "430", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
