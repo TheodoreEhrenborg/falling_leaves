@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), Position2, WhichKey(..), isPrime, main)
+module Main exposing (Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
 import Browser
 import Browser.Events
@@ -48,7 +48,7 @@ type WhichKey
     | OtherKey
 
 
-type alias Position2 =
+type alias Position =
     { x : Int
     , y : Int
     , y_vel : Int
@@ -57,10 +57,10 @@ type alias Position2 =
 
 type alias Model =
     { gameTicks : Int
-    , leaves : List Position2
+    , leaves : List Position
     , score : Int
     , highScore : Int
-    , koala : Position2
+    , koala : Position
     }
 
 
@@ -73,7 +73,7 @@ initGame highScore =
     ( { gameTicks = 0
       , leaves = []
       , score = 0
-      , koala = Position2 0 (gridSize.height * cellSize.height - 50) 0
+      , koala = Position 0 (gridSize.height * cellSize.height - 50) 0
       , highScore = highScore
       }
     , Cmd.none
@@ -95,7 +95,7 @@ type Msg
     | PlaceLeaf Int
 
 
-applyGravity : Position2 -> Position2
+applyGravity : Position -> Position
 applyGravity leaf =
     let
         new_y =
@@ -144,7 +144,7 @@ update msg model =
             )
 
         PlaceLeaf pos ->
-            ( { model | leaves = Position2 pos 20 0 :: model.leaves }, Cmd.none )
+            ( { model | leaves = Position pos 20 0 :: model.leaves }, Cmd.none )
 
         Key whichKey ->
             let
@@ -157,7 +157,7 @@ update msg model =
             ( { model | koala = newKoala }, Cmd.none )
 
 
-isFar : Position2 -> Position2 -> Bool
+isFar : Position -> Position -> Bool
 isFar koala leaf =
     let
         distance =
@@ -217,7 +217,7 @@ view model =
         , Svg.Attributes.style "touch-action: none"
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
-            :: List.map (renderCircle2 "green" 10) model.leaves
+            :: List.map (renderCircle "green" 10) model.leaves
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
@@ -230,8 +230,8 @@ view model =
         )
 
 
-renderCircle2 : String -> Int -> Position2 -> Html Msg
-renderCircle2 color radius pos =
+renderCircle : String -> Int -> Position -> Html Msg
+renderCircle color radius pos =
     circle
         [ cx (String.fromInt pos.x)
         , cy (String.fromInt pos.y)
@@ -246,11 +246,11 @@ renderCircle2 color radius pos =
 -- TODO Add credits in readme
 
 
-thinkPrime : Position2 -> List (Html Msg)
+thinkPrime : Position -> List (Html Msg)
 thinkPrime koala =
-    [ renderCircle2 "white" 5 (Position2 (koala.x - 10) koala.y 0)
-    , renderCircle2 "white" 5 (Position2 (koala.x - 20) (koala.y - 10) 0)
-    , renderCircle2 "white" 10 (Position2 (koala.x - 30) (koala.y - 25) 0)
+    [ renderCircle "white" 5 (Position (koala.x - 10) koala.y 0)
+    , renderCircle "white" 5 (Position (koala.x - 20) (koala.y - 10) 0)
+    , renderCircle "white" 10 (Position (koala.x - 30) (koala.y - 25) 0)
     , ellipse [ cx (str (koala.x - 60)), cy (str (koala.y - 65)), rx (str 50), ry (str 30), fill "white" ] []
     , text_ [ x (str (koala.x - 100)), y (str (koala.y - 65)), Svg.Attributes.style "fill: black", fontSize "13" ] [ text "That's prime" ]
     ]
