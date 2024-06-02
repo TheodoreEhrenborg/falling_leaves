@@ -7,7 +7,6 @@ import Html exposing (Html)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as Decode
 import List exposing (length)
-import NonEmptyList exposing (NonEmptyList)
 import Random
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
@@ -60,7 +59,6 @@ type alias Position2 =
 type alias Model =
     { gameTicks : Int
     , direction : Direction
-    , snake : NonEmptyList Position
     , prize : Maybe Position
     , leaves : List Position2
     , score : Int
@@ -78,13 +76,9 @@ initGame highScore =
     let
         head =
             computeGridCenter gridSize
-
-        initSnake =
-            NonEmptyList head (List.repeat (initialSnakeLength - 1) head)
     in
     ( { gameTicks = 0
       , direction = Up
-      , snake = initSnake
       , prize = Nothing
       , leaves = []
       , score = 0
@@ -130,30 +124,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         PointerDownAt offsetPos ->
-            ( { model | direction = pointerOffsetToDirection offsetPos model.direction model.snake.head }
+            ( model
             , Cmd.none
             )
 
         Tick _ ->
             let
-                nextHead =
-                    adjustPosition model.snake.head model.direction
-
-                atePrize =
-                    Just nextHead == model.prize
-
-                nextTail =
-                    model.snake.head
-                        :: (if atePrize then
-                                model.snake.tail
-
-                            else
-                                stripLast model.snake.tail
-                           )
-
-                nextSnake =
-                    NonEmptyList nextHead nextTail
-
                 movedLeaves =
                     List.map applyGravity model.leaves
 
@@ -169,7 +145,6 @@ update msg model =
                 nextModel =
                     { model
                         | leaves = nonEatenLeaves
-                        , snake = nextSnake
                         , score = nextScore
                         , highScore = Basics.max nextScore model.highScore
                         , gameTicks = model.gameTicks + 1
@@ -193,7 +168,6 @@ update msg model =
 
                 newKoala =
                     { koala | x = koala.x + getShift whichKey }
-
             in
             ( { model | koala = newKoala }, Cmd.none )
 
@@ -227,35 +201,6 @@ getShift key =
 generateLeaf : Cmd Msg
 generateLeaf =
     Random.generate PlaceLeaf (Random.int 0 (cellSize.width * gridSize.width))
-
-
-pointerOffsetToDirection : ( Float, Float ) -> Direction -> Position -> Direction
-pointerOffsetToDirection eventOffset currentDirection snakeHead =
-    let
-        ( eventX, eventY ) =
-            eventOffset
-    in
-    if currentDirection == Up || currentDirection == Down then
-        let
-            dx =
-                eventX - ((toFloat snakeHead.x + 0.5) * toFloat cellSize.width)
-        in
-        if dx < 0 then
-            Left
-
-        else
-            Right
-
-    else
-        let
-            dy =
-                eventY - ((toFloat snakeHead.y + 0.5) * toFloat cellSize.height)
-        in
-        if dy < 0 then
-            Up
-
-        else
-            Down
 
 
 
