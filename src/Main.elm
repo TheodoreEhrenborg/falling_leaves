@@ -319,8 +319,13 @@ view model =
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             --            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
-             -- A faster way would be to check primality once, instead of on every tick or every render
-            ++ (if isPrime model.score then thinkPrime model.koala else [])
+            -- A faster way would be to check primality once, instead of on every tick or every render
+            ++ (if isPrime model.score then
+                    thinkPrime model.koala
+
+                else
+                    []
+               )
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
             ++ [ text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
             ++ [ text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
