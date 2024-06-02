@@ -12,7 +12,6 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick)
 import Time
-import Util exposing (..)
 
 
 main =
@@ -33,10 +32,6 @@ cellSize =
 
 tickFrequency =
     100
-
-
-initialSnakeLength =
-    20
 
 
 
@@ -73,10 +68,6 @@ gravity =
 
 initGame : Int -> ( Model, Cmd Msg )
 initGame highScore =
-    let
-        head =
-            computeGridCenter gridSize
-    in
     ( { gameTicks = 0
       , direction = Up
       , prize = Nothing
@@ -123,7 +114,7 @@ applyGravity leaf =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        PointerDownAt offsetPos ->
+        PointerDownAt _ ->
             ( model
             , Cmd.none
             )
