@@ -18,6 +18,7 @@
 			elmPackages.elm
       elmPackages.elm-format
       elmPackages.elm-test
+      elmPackages.elm-review
                           ];
           };
         }
