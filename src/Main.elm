@@ -109,6 +109,7 @@ type Msg
     | PlacePrize (Maybe Position)
     | PointerDownAt ( Float, Float )
     | Key WhichKey
+    | PlaceLeaf Int
 
 
 applyGravity : Position2 -> Position2
@@ -140,6 +141,7 @@ update msg model =
                 nextHead =
                     adjustPosition model.snake.head model.direction
 
+                --dummy =Debug.log "time" time
                 atePrize =
                     Just nextHead == model.prize
 
@@ -177,8 +179,12 @@ update msg model =
                     }
             in
             ( nextModel
-            , if atePrize then
-                placePrize nextSnake
+            , if modBy 10 model.gameTicks == 0 then
+                let
+                    dummy =
+                        Debug.log "generating leaf" model.gameTicks
+                in
+                generateLeaf
 
               else
                 Cmd.none
@@ -186,6 +192,9 @@ update msg model =
 
         PlacePrize pos ->
             ( { model | prize = pos }, Cmd.none )
+
+        PlaceLeaf pos ->
+            ( { model | leaves = Position2 pos 20 0 :: model.leaves }, Cmd.none )
 
         Key whichKey ->
             let
@@ -229,6 +238,11 @@ getShift key =
 isLegalState : NonEmptyList Position -> Bool
 isLegalState snake =
     isInGrid gridSize snake.head && not (List.member snake.head snake.tail)
+
+
+generateLeaf : Cmd Msg
+generateLeaf =
+    Random.generate PlaceLeaf (Random.int 0 (cellSize.width * gridSize.width))
 
 
 placePrize : NonEmptyList Position -> Cmd Msg
@@ -304,7 +318,7 @@ view model =
             ++ List.map renderCircle2 model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
-            -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
             ++ [ text_ [ x "370", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
             ++ [ text_ [ x "430", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
