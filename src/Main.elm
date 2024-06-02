@@ -370,6 +370,15 @@ keyDecoder =
     Decode.map toDirection (Decode.field "key" Decode.string)
 
 
+isPrime : Int -> Bool
+isPrime n =
+    if n < 2 then
+        False
+
+    else
+        List.range 2 (n - 1) |> List.all (\x -> modBy x n /= 0)
+
+
 toDirection : String -> Msg
 toDirection string =
     case string of

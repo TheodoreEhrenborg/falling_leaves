@@ -14,6 +14,7 @@
             "elm/random": "1.0.0",
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
+            "elm-explorations/test": "2.2.0",
             "evancz/elm-playground": "1.0.3",
             "mpizenberg/elm-pointer-events": "5.0.0"
         },
