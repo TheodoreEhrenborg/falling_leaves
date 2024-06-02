@@ -1,8 +1,8 @@
 module Prime exposing (suite)
 
 import Expect
-import Main exposing (..)
-import Test exposing (..)
+import Main exposing (isPrime)
+import Test exposing (Test, describe, test)
 
 
 suite : Test
