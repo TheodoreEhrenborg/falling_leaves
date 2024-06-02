@@ -130,7 +130,6 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         PointerDownAt offsetPos ->
-            --let dummy = Debug.log "dump tuple" offsetPos in
             ( { model | direction = pointerOffsetToDirection offsetPos model.direction model.snake.head }
             , Cmd.none
             )
@@ -140,7 +139,6 @@ update msg model =
                 nextHead =
                     adjustPosition model.snake.head model.direction
 
-                --dummy =Debug.log "time" time
                 atePrize =
                     Just nextHead == model.prize
 
@@ -196,7 +194,6 @@ update msg model =
                 newKoala =
                     { koala | x = koala.x + getShift whichKey }
 
-                --dummy = Debug.log "koala position" newKoala
             in
             ( { model | koala = newKoala }, Cmd.none )
 
@@ -291,11 +288,8 @@ view model =
         , Svg.Attributes.style "touch-action: none"
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
-            --:: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
             :: List.map (renderCircle2 "green" 10) model.leaves
-            --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
-            --            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
                     thinkPrime model.koala
@@ -304,9 +298,6 @@ view model =
                     []
                )
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-         --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
-         --  ]
-         -- ++ if (model.state == Inactive && model.gameTicks >= 0) then [ text_ [ x "50%", y "50%", Svg.Attributes.style "dominant-baseline:middle; text-anchor:middle; fill: white; font-size: large"] [ text "Click or touch to begin..." ] ] else []
         )
 
 
