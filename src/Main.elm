@@ -230,6 +230,12 @@ view model =
                     []
                )
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
+            ++ (if model.score >= 19 then
+                    [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
+
+                else
+                    []
+               )
         )
 
 
