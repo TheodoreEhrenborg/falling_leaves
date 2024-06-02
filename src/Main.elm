@@ -1,8 +1,7 @@
-module Main exposing (Model, Msg(..), Position2, WhichKey(..), isPrime, main)
+module Main exposing (Model, Msg(..), Position, Position2, WhichKey(..), isPrime, main)
 
 import Browser
 import Browser.Events
-import Grid exposing (..)
 import Html exposing (Html)
 import Json.Decode as Decode
 import List exposing (length)
@@ -19,6 +18,18 @@ main =
 
 
 -- CONSTANTS
+
+
+type alias Size =
+    { width : Int
+    , height : Int
+    }
+
+
+type alias Position =
+    { x : Int
+    , y : Int
+    }
 
 
 gridSize =
@@ -52,7 +63,6 @@ type alias Position2 =
 
 type alias Model =
     { gameTicks : Int
-    , direction : Direction
     , prize : Maybe Position
     , leaves : List Position2
     , score : Int
@@ -68,7 +78,6 @@ gravity =
 initGame : Int -> ( Model, Cmd Msg )
 initGame highScore =
     ( { gameTicks = 0
-      , direction = Up
       , prize = Nothing
       , leaves = []
       , score = 0
@@ -242,6 +251,7 @@ renderCircle2 color radius pos =
 
 
 -- Adapted from https://github.com/MartinSnyder/elm-snake
+-- TODO Add credits in readme
 
 
 thinkPrime : Position2 -> List (Html Msg)
