@@ -32,6 +32,11 @@ gridSize =
     Size 40 20
 
 
+
+-- TODO Could combine grid and cell
+-- TODO Remove any magic numbers elsewhere
+
+
 cellSize : Size
 cellSize =
     Size 20 20
@@ -77,7 +82,7 @@ initGame =
     ( { gameTicks = 0
       , leaves = []
       , score = 0
-      , koala = Position 0 (gridSize.height * cellSize.height - 50) 0
+      , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
       }
     , Cmd.none
     )
@@ -221,7 +226,7 @@ view model =
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
             :: List.map (renderCircle "green" 10) model.leaves
-            ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
+            ++ [ image [ x (String.fromInt (model.koala.x - 25)), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
                     thinkPrime model.koala
