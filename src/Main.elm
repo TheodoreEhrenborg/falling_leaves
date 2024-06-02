@@ -241,7 +241,7 @@ renderCircle2 color radius pos =
 
 
 
--- https://github.com/MartinSnyder/elm-snake
+-- Adapted from https://github.com/MartinSnyder/elm-snake
 
 
 thinkPrime : Position2 -> List (Html Msg)
