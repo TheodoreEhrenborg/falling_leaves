@@ -296,7 +296,7 @@ subscriptions model =
 
 
 -- VIEW
-
+str=String.fromInt
 
 view : Model -> Html Msg
 view model =
@@ -311,10 +311,11 @@ view model =
             --:: (maybeToList model.prize |> List.map (\pos -> renderCircle "green" pos))
             :: []
             --++ List.map (renderCircle "red") model.snake.tail
-            ++ List.map renderCircle2 model.leaves
+            ++ List.map (renderCircle2 "green" 10) model.leaves
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             --            ++ [ text_ [ x "100", y "20", Svg.Attributes.style "fill: white" ] [ text ("Ticks: " ++ String.fromInt model.gameTicks) ] ]
+             --++ thinkPrime model.koala
             ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
             ++ [ text_ [ x "360", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
             ++ [ text_ [ x "420", y "40", fontSize "48", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
@@ -324,13 +325,13 @@ view model =
         )
 
 
-renderCircle2 : Position2 -> Html Msg
-renderCircle2 pos =
+renderCircle2 : String -> Int -> Position2 -> Html Msg
+renderCircle2 color radius pos =
     circle
         [ cx (String.fromInt pos.x)
         , cy (String.fromInt pos.y)
-        , r (String.fromInt 10)
-        , fill "green"
+        , r (String.fromInt radius)
+        , fill color
         ]
         []
 
@@ -349,6 +350,12 @@ renderCircle color pos =
 
 -- https://github.com/MartinSnyder/elm-snake
 
+thinkPrime : Position2 -> List (Html Msg)
+thinkPrime koala = [renderCircle2 "white" 5 (Position2 (koala.x-10) koala.y 0)]
+            ++ [renderCircle2 "white" 5 (Position2 (koala.x-20) (koala.y - 10) 0)]
+            ++ [renderCircle2 "white" 10 (Position2 (koala.x-30) (koala.y - 25) 0)]
+            ++ [ellipse [cx (str(koala.x-60)), cy (str(koala.y - 65)), rx (str 50) ,ry (str 30), fill "white"] []]
+            ++ [ text_ [ x (str(koala.x-100)), y (str(koala.y - 65)), Svg.Attributes.style "fill: black", fontSize "13" ] [ text "That's prime" ] ]
 
 keyDecoder : Decode.Decoder Msg
 keyDecoder =
