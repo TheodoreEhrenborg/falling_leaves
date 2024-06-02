@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), Position, Position2, WhichKey(..), isPrime, main)
+module Main exposing (Model, Msg(..), Position2, WhichKey(..), isPrime, main)
 
 import Browser
 import Browser.Events
@@ -23,12 +23,6 @@ main =
 type alias Size =
     { width : Int
     , height : Int
-    }
-
-
-type alias Position =
-    { x : Int
-    , y : Int
     }
 
 
@@ -63,7 +57,6 @@ type alias Position2 =
 
 type alias Model =
     { gameTicks : Int
-    , prize : Maybe Position
     , leaves : List Position2
     , score : Int
     , highScore : Int
@@ -78,7 +71,6 @@ gravity =
 initGame : Int -> ( Model, Cmd Msg )
 initGame highScore =
     ( { gameTicks = 0
-      , prize = Nothing
       , leaves = []
       , score = 0
       , koala = Position2 0 (gridSize.height * cellSize.height - 50) 0
