@@ -6,6 +6,7 @@ import Grid exposing (..)
 import Html exposing (Html)
 import Html.Events.Extra.Pointer as Pointer
 import Json.Decode as Decode
+import List exposing (length)
 import NonEmptyList as NEL exposing (NonEmptyList)
 import Random
 import Svg exposing (..)
@@ -142,13 +143,6 @@ update msg model =
                 atePrize =
                     Just nextHead == model.prize
 
-                nextScore =
-                    if atePrize then
-                        model.score + 1
-
-                    else
-                        model.score
-
                 nextTail =
                     model.snake.head
                         :: (if atePrize then
@@ -164,8 +158,14 @@ update msg model =
                 movedLeaves =
                     List.map applyGravity model.leaves
 
+                onScreenLeaves =
+                    List.filter (\leaf -> leaf.y < gridSize.height * cellSize.height) movedLeaves
+
                 nonEatenLeaves =
-                    List.filter (isFar model.koala) movedLeaves
+                    List.filter (isFar model.koala) onScreenLeaves
+
+                nextScore =
+                    model.score + length onScreenLeaves - length nonEatenLeaves
 
                 nextModel =
                     { model
@@ -305,6 +305,7 @@ view model =
             --++ [ renderCircle "purple" model.snake.head ]
             ++ [ image [ x (String.fromInt model.koala.x), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
             -- ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white"] [ text ("Ticks: " ++ (String.fromInt model.gameTicks))]
+            ++ [ text_ [ x "5", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ] ]
             ++ [ text_ [ x "370", y "20", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ] ]
             ++ [ text_ [ x "430", y "20", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
          --   , text_ [ x (String.fromInt ((gridSize.width * cellSize.width) - 5)), y "20", Svg.Attributes.style "fill: white; text-anchor: end"] [ text ("High Score: " ++ (String.fromInt model.highScore))]
