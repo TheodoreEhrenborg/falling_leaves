@@ -226,7 +226,7 @@ view model =
         ]
         (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
             :: List.map (renderCircle "green" 10) model.leaves
-            ++ [ image [ x (String.fromInt (model.koala.x - 25)), y (String.fromInt model.koala.y), width "50px", height "50px", xlinkHref "https://upload.wikimedia.org/wikipedia/commons/4/49/Koala_climbing_tree.jpg" ] [] ]
+            ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "../assets/koala_mouth_closed.png" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
                     thinkPrime model.koala
