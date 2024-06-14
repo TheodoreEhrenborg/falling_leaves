@@ -241,6 +241,7 @@ view model =
         ]
         (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "../assets/background.png" ] []
             :: List.map renderLeaf model.leaves
+            ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
             ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "../assets/koala_mouth_closed.png" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
@@ -249,7 +250,6 @@ view model =
                 else
                     []
                )
-            ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
             ++ (if model.score >= 19 then
                     [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
 
