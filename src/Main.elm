@@ -25,7 +25,8 @@ type alias Size =
     { width : Int
     , height : Int
     }
-
+-- Sunrise over the australian outback world exhibit
+-- https://www.youtube.com/watch?v=h8dv8ykprf8
 
 gridSize : Size
 gridSize =
