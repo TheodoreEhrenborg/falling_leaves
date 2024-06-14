@@ -262,11 +262,18 @@ renderCircle color radius pos =
 
 thinkPrime : Position -> List (Html Msg)
 thinkPrime koala =
-    [ renderCircle "white" 5 (Position (koala.x - 10) koala.y 0)
-    , renderCircle "white" 5 (Position (koala.x - 20) (koala.y - 10) 0)
-    , renderCircle "white" 10 (Position (koala.x - 30) (koala.y - 25) 0)
-    , ellipse [ cx (str (koala.x - 60)), cy (str (koala.y - 65)), rx (str 50), ry (str 30), fill "white" ] []
-    , text_ [ x (str (koala.x - 100)), y (str (koala.y - 65)), Svg.Attributes.style "fill: black", fontSize "13" ] [ text "That's prime" ]
+    let
+        x_offset =
+            -20
+
+        y_offset =
+            -30
+    in
+    [ renderCircle "white" 5 (Position (koala.x - 10 + x_offset) (koala.y + y_offset) 0)
+    , renderCircle "white" 5 (Position (koala.x - 20 + x_offset) (koala.y - 10 + y_offset) 0)
+    , renderCircle "white" 10 (Position (koala.x - 30 + x_offset) (koala.y - 25 + y_offset) 0)
+    , ellipse [ cx (str (koala.x - 60 + x_offset)), cy (str (koala.y - 65 + y_offset)), rx (str 50), ry (str 30), fill "white" ] []
+    , text_ [ x (str (koala.x - 100 + x_offset)), y (str (koala.y - 65 + y_offset)), Svg.Attributes.style "fill: black", fontSize "13" ] [ text "That's prime" ]
     ]
 
 
