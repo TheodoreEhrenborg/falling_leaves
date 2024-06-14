@@ -240,7 +240,7 @@ view model =
         , Svg.Attributes.style "touch-action: none"
         ]
         (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "../assets/background.png" ] []
-            :: List.map (renderCircle "green" 10) model.leaves
+            :: List.map renderLeaf model.leaves
             ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "../assets/koala_mouth_closed.png" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
@@ -257,6 +257,11 @@ view model =
                     []
                )
         )
+
+
+renderLeaf : Position -> Html Msg
+renderLeaf pos =
+    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref "../assets/2leaves.png" ] []
 
 
 renderCircle : String -> Int -> Position -> Html Msg
