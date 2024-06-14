@@ -1,0 +1,16 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<main></main>
+<script src="elm.js"></script>
+<script>
+    function startAudio(r){if(window.AudioContext=window.AudioContext||window.webkitAudioContext||!1,window.AudioContext){let d=[],c=new AudioContext,i={};async function s(o){let e;try{var t=await fetch(o.audioUrl);e=await t.arrayBuffer()}catch{return void r.ports.audioPortFromJS.send({type:0,requestId:o.requestId,error:"NetworkError"})}try{var a=await c.decodeAudioData(e),n=d.length;d.push(a),r.ports.audioPortFromJS.send({type:1,requestId:o.requestId,bufferId:n,durationInSeconds:a.length/a.sampleRate})}catch(e){r.ports.audioPortFromJS.send({type:0,requestId:o.requestId,error:e.message})}}function m(e,o){return(e-o)/1e3+c.currentTime}function p(e,o){o?(e.loopStart=o.loopStart/1e3,e.loopEnd=o.loopEnd/1e3,e.loop=!0):e.loop=!1}function f(e,l){return e.map(o=>{var t,a,n=c.createGain(),r=(n.gain.setValueAtTime(o[0].volume,0),n.gain.linearRampToValueAtTime(o[0].volume,0),m(l,l));for(let e=1;e<o.length;e++){var d=o[e-1],i=m(d.time,l),s=o[e],u=m(s.time,l);r<u&&i<=r?(d=d.volume,t=s.volume,a=((a=r)-i)/(u-i),i=Number.isFinite(a)?a*(t-d)+d:d,n.gain.setValueAtTime(i,0),n.gain.linearRampToValueAtTime(s.volume,u)):r<u?n.gain.linearRampToValueAtTime(s.volume,u):n.gain.setValueAtTime(s.volume,0)}return n})}function v(o){for(let e=1;e<o.length;e++)o[e-1].connect(o[e])}r.ports.audioPortFromJS.send({type:2,samplesPerSecond:c.sampleRate}),r.ports.audioPortToJS.subscribe(async o=>{var t=(new Date).getTime();for(let e=0;e<o.audio.length;e++){var a=o.audio[e];switch(a.action){case"stopSound":var n=i[a.nodeGroupId];delete i[a.nodeGroupId],n.nodes.sourceNode.stop(),n.nodes.sourceNode.disconnect(),n.nodes.gainNode.disconnect(),n.nodes.volumeAtGainNodes.map(e=>e.disconnect());break;case"setVolume":i[a.nodeGroupId].nodes.gainNode.gain.setValueAtTime(a.volume,0);break;case"setVolumeAt":var n=i[a.nodeGroupId],r=(n.nodes.volumeAtGainNodes.map(e=>e.disconnect()),n.nodes.gainNode.disconnect(),f(a.volumeAt,t));v([n.nodes.gainNode,...r,c.destination]),n.nodes.volumeAtGainNodes=r;break;case"setLoopConfig":p(i[a.nodeGroupId].nodes.sourceNode,a.loop);break;case"setPlaybackRate":i[a.nodeGroupId].nodes.sourceNode.playbackRate.setValueAtTime(a.playbackRate,0);break;case"startSound":r=function(o,e,t,a,n,r,d,i){var s=c.createBufferSource();if(d){var u=10+d.loopEnd/1e3-o.length/o.sampleRate;if(0<u){var u=o.getChannelData(0).length+Math.ceil(u*o.sampleRate),l=c.createBuffer(o.numberOfChannels,u,c.sampleRate);for(let e=0;e<o.numberOfChannels;e++)l.copyToChannel(o.getChannelData(e),e);s.buffer=l}else s.buffer=o}else s.buffer=o;return s.playbackRate.value=i,p(s,d),u=f(t,r),(i=c.createGain()).gain.setValueAtTime(e,0),v([s,i,...u,c.destination]),r<=a?s.start(m(a,r),n/1e3):s.start(0,(r-a)/1e3+n/1e3),{sourceNode:s,gainNode:i,volumeAtGainNodes:u}}(d[a.bufferId],a.volume,a.volumeTimelines,a.startTime,a.startAt,t,a.loop,a.playbackRate);i[a.nodeGroupId]={bufferId:a.bufferId,nodes:r}}}var e=o.audioCmds.map(s);await Promise.all(e)})}else console.log("Web audio is not supported in your browser.")}
+
+    var app = Elm.Main.init({ node: document.querySelector('main') });
+
+    startAudio(app);
+  </script>
+</body>
+</html>

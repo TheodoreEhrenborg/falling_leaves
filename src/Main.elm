@@ -1,5 +1,6 @@
-module Main exposing (Model, Msg(..), Position, WhichKey(..), isPrime, main)
+port module Main exposing (Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
+import Audio exposing (Audio, AudioCmd, AudioData)
 import Browser
 import Browser.Events
 import Html exposing (Html)
@@ -10,13 +11,27 @@ import Svg exposing (circle, ellipse, image, svg, text, text_)
 import Svg.Attributes exposing (cx, cy, fill, fontSize, height, r, rx, ry, viewBox, width, x, xlinkHref, y)
 import Svg.Events exposing (onClick)
 import Time
+import Json.Decode
+import Json.Encode
+import Task
+import Time
+
+port audioPortToJS : Json.Encode.Value -> Cmd msg
 
 
-main : Program () Model Msg
+port audioPortFromJS : (Json.Decode.Value -> msg) -> Sub msg
+
 main =
-    Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
+    Audio.elementWithAudio { init = init, update = update, view = view, subscriptions = subscriptions ,
+         audioPort = { toJS = audioPortToJS, fromJS = audioPortFromJS }, audio=audio
 
+                           }
 
+audio : AudioData -> Model -> Audio
+audio _ model =
+        case (model.sound, model.time) of
+           (Just a_sound, Just a_time) -> Audio.audio a_sound a_time
+           _ -> Audio.silence
 
 -- CONSTANTS
 
@@ -85,21 +100,28 @@ type alias Model =
     , leaves : List Position
     , score : Int
     , koala : Position
+    , sound : Maybe Audio.Source
+    , time: Maybe Time.Posix
     }
 
 
-initGame : ( Model, Cmd Msg )
+initGame : ( Model, Cmd Msg , AudioCmd Msg)
 initGame =
     ( { gameTicks = 0
       , leaves = []
       , score = 0
+        , sound = Nothing
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
+      , time = Nothing
       }
-    , Cmd.none
+    , Task.perform HereComesAudioTime Time.now
+    , Audio.loadAudio
+            SoundLoaded
+            "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"
     )
 
 
-init : () -> ( Model, Cmd Msg )
+init : () -> ( Model, Cmd Msg ,AudioCmd Msg)
 init _ =
     initGame
 
@@ -112,6 +134,8 @@ type Msg
     = Tick
     | Key WhichKey
     | PlaceLeaf Int
+    | SoundLoaded (Result Audio.LoadError Audio.Source)
+    | HereComesAudioTime Time.Posix
 
 
 applyGravity : Position -> Position
@@ -129,11 +153,32 @@ applyGravity leaf =
     }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : AudioData -> Msg -> Model -> ( Model, Cmd Msg ,AudioCmd msg)
+update _ msg model =
     case msg of
+        HereComesAudioTime a_time -> ( { model | time = Just a_time }
+                    , Cmd.none
+                    , Audio.cmdNone
+                    )
+        SoundLoaded result ->
+            case result of
+                Ok sound ->
+                    ( { model | sound = Just sound }
+                    , Cmd.none
+                    , Audio.cmdNone
+                    )
+
+                Err err ->
+                    let _ = Debug.log "error" err in
+                        ( model
+                        , Cmd.none
+                        , Audio.cmdNone
+                        )
+
+
         Tick ->
             let
+                --foo = Debug.log "foo" model
                 movedLeaves =
                     List.map applyGravity model.leaves
 
@@ -159,10 +204,11 @@ update msg model =
 
               else
                 Cmd.none
+                , Audio.cmdNone
             )
 
         PlaceLeaf pos ->
-            ( { model | leaves = Position pos 20 0 :: model.leaves }, Cmd.none )
+            ( { model | leaves = Position pos 20 0 :: model.leaves }, Cmd.none , Audio.cmdNone)
 
         Key whichKey ->
             let
@@ -172,7 +218,7 @@ update msg model =
                 newKoala =
                     { koala | x = onScreen (koala.x + getShift whichKey) }
             in
-            ( { model | koala = newKoala }, Cmd.none )
+            ( { model | koala = newKoala }, Cmd.none ,Audio.cmdNone)
 
 
 onScreen : Int -> Int
@@ -215,8 +261,8 @@ generateLeaf =
 -- SUBSCRIPTIONS
 
 
-subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions : AudioData -> Model -> Sub Msg
+subscriptions _ _ =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
         , Time.every tickFrequency (\_ -> Tick)
@@ -232,18 +278,18 @@ str =
     String.fromInt
 
 
-view : Model -> Html Msg
-view model =
+view : AudioData -> Model -> Html Msg
+view _ model =
     svg
         [ width "100%"
         , height "auto"
         , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
         , Svg.Attributes.style "touch-action: none"
         ]
-        (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "../assets/background.png" ] []
+        (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
             :: List.map renderLeaf model.leaves
             ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-            ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "../assets/koala_mouth_closed.png" ] [] ]
+            ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "assets/koala_mouth_closed.png" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
             ++ (if isPrime model.score then
                     thinkPrime model.koala
@@ -262,7 +308,7 @@ view model =
 
 renderLeaf : Position -> Html Msg
 renderLeaf pos =
-    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref "../assets/2leaves.png" ] []
+    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref "assets/2leaves.png" ] []
 
 
 renderCircle : String -> Int -> Position -> Html Msg
