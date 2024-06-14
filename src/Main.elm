@@ -1,5 +1,6 @@
 port module Main exposing (Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
+-- TODO Delete this
 import Audio exposing (Audio, AudioCmd, AudioData)
 import Browser
 import Browser.Events
@@ -17,6 +18,7 @@ import Task
 import Time
 
 port audioPortToJS : Json.Encode.Value -> Cmd msg
+port playFromElm : String -> Cmd msg
 
 
 port audioPortFromJS : (Json.Decode.Value -> msg) -> Sub msg
@@ -114,10 +116,8 @@ initGame =
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
       , time = Nothing
       }
-    , Task.perform HereComesAudioTime Time.now
-    , Audio.loadAudio
-            SoundLoaded
-            "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3"
+    , Cmd.none
+    , Audio.cmdNone
     )
 
 
@@ -218,7 +218,8 @@ update _ msg model =
                 newKoala =
                     { koala | x = onScreen (koala.x + getShift whichKey) }
             in
-            ( { model | koala = newKoala }, Cmd.none ,Audio.cmdNone)
+                -- This isn't enough---they have to click in order for it to go
+            ( { model | koala = newKoala }, playFromElm "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" ,Audio.cmdNone)
 
 
 onScreen : Int -> Int
