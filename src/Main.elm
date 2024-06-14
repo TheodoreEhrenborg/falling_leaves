@@ -52,6 +52,16 @@ gravity =
     1
 
 
+screenLeft : Int
+screenLeft =
+    130
+
+
+screenRight : Int
+screenRight =
+    680
+
+
 
 -- MODEL
 
@@ -159,9 +169,14 @@ update msg model =
                     model.koala
 
                 newKoala =
-                    { koala | x = koala.x + getShift whichKey }
+                    { koala | x = onScreen (koala.x + getShift whichKey) }
             in
             ( { model | koala = newKoala }, Cmd.none )
+
+
+onScreen : Int -> Int
+onScreen x =
+    min (max x screenLeft) screenRight
 
 
 isFar : Position -> Position -> Bool
@@ -192,7 +207,7 @@ getShift key =
 
 generateLeaf : Cmd Msg
 generateLeaf =
-    Random.generate PlaceLeaf (Random.int 0 (cellSize.width * gridSize.width))
+    Random.generate PlaceLeaf (Random.int screenLeft screenRight)
 
 
 
