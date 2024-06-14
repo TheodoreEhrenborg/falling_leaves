@@ -6,7 +6,7 @@ import Html exposing (Html)
 import Json.Decode as Decode
 import List exposing (length)
 import Random
-import Svg exposing (circle, ellipse, image, rect, svg, text, text_)
+import Svg exposing (circle, ellipse, image, svg, text, text_)
 import Svg.Attributes exposing (cx, cy, fill, fontSize, height, r, rx, ry, viewBox, width, x, xlinkHref, y)
 import Svg.Events exposing (onClick)
 import Time
@@ -224,7 +224,7 @@ view model =
         , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
         , Svg.Attributes.style "touch-action: none"
         ]
-        (rect [ width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)) ] []
+        (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "../assets/background.png" ] []
             :: List.map (renderCircle "green" 10) model.leaves
             ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "../assets/koala_mouth_closed.png" ] [] ]
             -- A faster way would be to check primality once, instead of on every tick or every render
