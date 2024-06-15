@@ -311,7 +311,7 @@ view _ model =
                 (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
                     :: List.map renderLeaf act_model.leaves
                     ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt act_model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-                    ++ [ displayKoala act_model ]
+                    ++  displayKoala act_model
                     -- A faster way would be to check primality once, instead of on every tick or every render
                     ++ (if isPrime act_model.score then
                             thinkPrime act_model.koala
@@ -371,7 +371,10 @@ keyDecoder =
     Decode.map toDirection (Decode.field "key" Decode.string)
 
 displayKoala act_model =
-    image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref (if act_model.mouthOpen then "assets/koala_mouth_open.png" else "assets/koala_mouth_closed.png") ] []
+    -- Always display both images so that there's no flickering
+    -- when loading the second image for the first time
+    let displayIt url = image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref url ] [] in
+    if act_model.mouthOpen then [displayIt "assets/koala_mouth_closed.png", displayIt "assets/koala_mouth_open.png"] else [displayIt "assets/koala_mouth_open.png", displayIt "assets/koala_mouth_closed.png"]
 
 isPrime : Int -> Bool
 isPrime n =
