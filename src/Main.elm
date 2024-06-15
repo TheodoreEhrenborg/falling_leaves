@@ -1,6 +1,5 @@
 port module Main exposing (LeafType, Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
-
 import Browser
 import Browser.Events
 import Html exposing (Html)
@@ -16,7 +15,7 @@ import Time
 port playFromElm : String -> Cmd msg
 
 
-main: Program () Model Msg
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -24,7 +23,6 @@ main =
         , view = view
         , subscriptions = subscriptions
         }
-
 
 
 
@@ -359,7 +357,7 @@ year =
     19
 
 
-displayLine : String -> Int-> Html Msg
+displayLine : String -> Int -> Html Msg
 displayLine string height =
     text_ [ x "200", y (str height), fontSize "10", Svg.Attributes.style "fill: black" ] [ text string ]
 
