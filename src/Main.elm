@@ -300,7 +300,7 @@ view _ model =
                 , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
                 , Svg.Attributes.style "touch-action: none"
                 ]
-                [image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] [] ,text_ [ x "250", y "60", fontSize "32", Svg.Attributes.style "fill: white", onClick (StartClick) ] [ text "Click on 🐨 to start" ]]
+                [image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] [] ,text_ [ x "200", y "60", fontSize "32", Svg.Attributes.style "fill: white", onClick (StartClick) ] [ text "Click on 🐨 emoji to start" ]]
         ActiveModel act_model ->
             svg
                 [ width "100%"
