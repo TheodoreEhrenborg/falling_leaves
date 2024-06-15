@@ -218,11 +218,7 @@ update _ msg model =
                             }
                     in
                     ( ActiveModel nextModel
-                    , if modBy 10 act_model.gameTicks == 0 then
-                        generateLeaf
-
-                    else
-                        if nextScore == year && act_model.score /= year then playFromElm "assets/happy_birthday.m4a" else Cmd.none
+                    , Cmd.batch [if modBy 10 act_model.gameTicks == 0 then generateLeaf else Cmd.none, if nextScore == year && act_model.score /= year then playFromElm "assets/happy_birthday.m4a" else Cmd.none, if act_model.score /= nextScore then playFromElm "assets/nom.wav" else Cmd.none]
                         , Audio.cmdNone
                     )
 
