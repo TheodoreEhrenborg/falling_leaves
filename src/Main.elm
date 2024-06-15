@@ -254,7 +254,6 @@ update msg model =
                         newKoala =
                             { koala | x = onScreen (koala.x + getShift whichKey) }
                     in
-                    -- This isn't enough---they have to click in order for it to go
                     ( ActiveModel { act_model | koala = newKoala }, Cmd.none )
 
 
