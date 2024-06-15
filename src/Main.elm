@@ -178,7 +178,6 @@ update msg model =
             case msg of
                 Tick ->
                     let
-                        --foo = Debug.log "foo" model
                         movedLeaves =
                             List.map applyGravity act_model.leaves
 
