@@ -340,7 +340,7 @@ displayCredits credits = case credits of
                              CreditsWithHeight h -> [
                                                 displayLine "Happy birthday!" (280+h),
                                                 displayLine "Credits" (300+h),
-                                                displayLine "Jing Wang: Artistic director, musician, graphic designer" (320+h),
+                                                displayLine "Jing Wang: Artistic Director, Musician, Graphic Designer" (320+h),
                                                 displayLine "Theodore Ehrenborg: Programmer" (340+h),
                                                 displayLine "Lots learned from https://github.com/MartinSnyder/elm-snake" (360+h),
                                                 displayLine "Background sound from:" (380+h),
