@@ -1,9 +1,10 @@
-port module Main exposing (Model, Msg(..), Position, WhichKey(..), isPrime, main)
+port module Main exposing (LeafType, Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
 -- TODO Delete this
+
 import Audio exposing (Audio, AudioCmd, AudioData)
-import Browser
 import Browser.Events
+import Browser
 import Html exposing (Html)
 import Json.Decode as Decode
 import List exposing (length)
@@ -12,25 +13,25 @@ import Svg exposing (circle, ellipse, image, svg, text, text_)
 import Svg.Attributes exposing (cx, cy, fill, fontSize, height, r, rx, ry, viewBox, width, x, xlinkHref, y)
 import Svg.Events exposing (onClick)
 import Time
-import Json.Decode
-import Json.Encode
-import Task
-import Time
 
-port audioPortToJS : Json.Encode.Value -> Cmd msg
+
 port playFromElm : String -> Cmd msg
 
 
-port audioPortFromJS : (Json.Decode.Value -> msg) -> Sub msg
-
 main =
-    Audio.elementWithAudio { init = init, update = update, view = view, subscriptions = subscriptions ,
-         audioPort = { toJS = audioPortToJS, fromJS = audioPortFromJS }, audio=audio
+    Browser.element
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
 
-                           }
 
 audio : AudioData -> Model -> Audio
-audio _ model = Audio.silence
+audio _ model =
+    Audio.silence
+
+
 
 -- CONSTANTS
 
@@ -39,6 +40,7 @@ type alias Size =
     { width : Int
     , height : Int
     }
+
 
 gridSize : Size
 gridSize =
@@ -84,6 +86,7 @@ type WhichKey
     | RightArrow
     | OtherKey
 
+
 type alias LeafPosition =
     { x : Int
     , y : Int
@@ -91,12 +94,17 @@ type alias LeafPosition =
     , leafType : LeafType
     }
 
+
 type alias Position =
     { x : Int
     , y : Int
     }
 
-type Model = ActiveModel AnActiveModel | InactiveModel
+
+type Model
+    = ActiveModel AnActiveModel
+    | InactiveModel
+
 
 type alias AnActiveModel =
     { gameTicks : Int
@@ -104,33 +112,36 @@ type alias AnActiveModel =
     , score : Int
     , koala : Position
     , sound : Maybe Audio.Source
-    , time: Maybe Time.Posix
-    , mouthOpen: Bool
+    , time : Maybe Time.Posix
+    , mouthOpen : Bool
     , credits : Credits
     }
 
-type Credits = NoCredits | CreditsWithHeight Int
+
+type Credits
+    = NoCredits
+    | CreditsWithHeight Int
 
 
-initActiveModel : ( Model, Cmd Msg , AudioCmd Msg)
+initActiveModel : ( Model, Cmd Msg )
 initActiveModel =
-    ( ActiveModel { gameTicks = 0
-      , leaves = []
-      , score = 0
+    ( ActiveModel
+        { gameTicks = 0
+        , leaves = []
+        , score = 0
         , sound = Nothing
-      , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50)
-      , time = Nothing
-      , mouthOpen = False
-      , credits = NoCredits
-      }
+        , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50)
+        , time = Nothing
+        , mouthOpen = False
+        , credits = NoCredits
+        }
     , Cmd.none
-    , Audio.cmdNone
     )
 
 
-init : () -> ( Model, Cmd Msg , AudioCmd Msg)
-init _ = (InactiveModel, Cmd.none, Audio.cmdNone)
-
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( InactiveModel, Cmd.none )
 
 
 
@@ -140,12 +151,14 @@ init _ = (InactiveModel, Cmd.none, Audio.cmdNone)
 type Msg
     = Tick
     | Key WhichKey
-    | PlaceLeaf (Int, LeafType)
-    | SoundLoaded (Result Audio.LoadError Audio.Source)
-    | HereComesAudioTime Time.Posix
+    | PlaceLeaf ( Int, LeafType )
     | StartClick
 
-type LeafType = OneLeaf | TwoLeaves
+
+type LeafType
+    = OneLeaf
+    | TwoLeaves
+
 
 applyGravity : LeafPosition -> LeafPosition
 applyGravity leaf =
@@ -162,36 +175,18 @@ applyGravity leaf =
     }
 
 
-update : AudioData -> Msg -> Model -> ( Model, Cmd Msg ,AudioCmd Msg)
-update _ msg model =
+update : Msg -> Model -> ( Model, Cmd Msg)
+update msg model =
     case model of
         InactiveModel ->
             if msg == StartClick then
                 initActiveModel
+
             else
-                (model, Cmd.none, Audio.cmdNone)
+                ( model, Cmd.none )
+
         ActiveModel act_model ->
             case msg of
-                HereComesAudioTime a_time -> ( ActiveModel { act_model | time = Just a_time }
-                            , Cmd.none
-                            , Audio.cmdNone
-                            )
-                SoundLoaded result->
-                    case result of
-                        Ok sound ->
-                            ( ActiveModel { act_model | sound = Just sound }
-                            , Cmd.none
-                            , Audio.cmdNone
-                            )
-
-                        Err err ->
-                            --let _ = Debug.log "error" err in
-                                ( model
-                                , Cmd.none
-                                , Audio.cmdNone
-                                )
-
-
                 Tick ->
                     let
                         --foo = Debug.log "foo" model
@@ -210,13 +205,23 @@ update _ msg model =
                         nextScore =
                             act_model.score + length onScreenLeaves - length nonEatenLeaves
 
-                        nextMouthOpen = (length unseenLeaves /= length nonEatenLeaves)
-                        justReachedYear = nextScore == year && act_model.score /= year
-                        nextCredits = if justReachedYear then CreditsWithHeight 200 else
-                                          case act_model.credits of
-                                              NoCredits -> NoCredits
-                                              CreditsWithHeight height -> CreditsWithHeight (height - 5)
+                        nextMouthOpen =
+                            length unseenLeaves /= length nonEatenLeaves
 
+                        justReachedYear =
+                            nextScore == year && act_model.score /= year
+
+                        nextCredits =
+                            if justReachedYear then
+                                CreditsWithHeight 200
+
+                            else
+                                case act_model.credits of
+                                    NoCredits ->
+                                        NoCredits
+
+                                    CreditsWithHeight height ->
+                                        CreditsWithHeight (height - 5)
 
                         nextModel =
                             { act_model
@@ -228,15 +233,31 @@ update _ msg model =
                             }
                     in
                     ( ActiveModel nextModel
-                    , Cmd.batch [if modBy 10 act_model.gameTicks == 0 then generateLeaf else Cmd.none, if justReachedYear then playFromElm "assets/happy_birthday.m4a" else Cmd.none, if act_model.score /= nextScore then playFromElm "assets/nom.wav" else Cmd.none]
-                        , Audio.cmdNone
+                    , Cmd.batch
+                        [ if modBy 10 act_model.gameTicks == 0 then
+                            generateLeaf
+
+                          else
+                            Cmd.none
+                        , if justReachedYear then
+                            playFromElm "assets/happy_birthday.m4a"
+
+                          else
+                            Cmd.none
+                        , if act_model.score /= nextScore then
+                            playFromElm "assets/nom.wav"
+
+                          else
+                            Cmd.none
+                        ]
                     )
 
-                PlaceLeaf (pos, leafType) ->
-                    ( ActiveModel { act_model | leaves = LeafPosition pos 20 0 leafType :: act_model.leaves }, Cmd.none , Audio.cmdNone)
+                PlaceLeaf ( pos, leafType ) ->
+                    ( ActiveModel { act_model | leaves = LeafPosition pos 20 0 leafType :: act_model.leaves }, Cmd.none )
 
                 StartClick ->
-                    ( model , Cmd.none , Audio.cmdNone)
+                    ( model, Cmd.none )
+
                 Key whichKey ->
                     let
                         koala =
@@ -245,23 +266,29 @@ update _ msg model =
                         newKoala =
                             { koala | x = onScreen (koala.x + getShift whichKey) }
                     in
-                        -- This isn't enough---they have to click in order for it to go
-                    ( ActiveModel { act_model | koala = newKoala }, Cmd.none ,Audio.cmdNone)
+                    -- This isn't enough---they have to click in order for it to go
+                    ( ActiveModel { act_model | koala = newKoala }, Cmd.none )
 
 
 onScreen : Int -> Int
 onScreen x =
     min (max x screenLeft) screenRight
 
+
 outOfRange : Int -> Position -> LeafPosition -> Bool
 outOfRange distance koala leaf =
     abs (koala.x - leaf.x) > distance || abs (koala.y - leaf.y) > distance
 
+
 outOfEatingRange : Position -> LeafPosition -> Bool
-outOfEatingRange = outOfRange 30
+outOfEatingRange =
+    outOfRange 30
+
 
 outOfSeeingRange : Position -> LeafPosition -> Bool
-outOfSeeingRange = outOfRange 100
+outOfSeeingRange =
+    outOfRange 100
+
 
 getShift : WhichKey -> Int
 getShift key =
@@ -282,18 +309,19 @@ getShift key =
 
 generateLeaf : Cmd Msg
 generateLeaf =
-    Random.generate PlaceLeaf (Random.pair (Random.int screenLeft screenRight) (Random.uniform OneLeaf [TwoLeaves]))
+    Random.generate PlaceLeaf (Random.pair (Random.int screenLeft screenRight) (Random.uniform OneLeaf [ TwoLeaves ]))
+
 
 
 -- SUBSCRIPTIONS
 
 
-subscriptions : AudioData -> Model -> Sub Msg
-subscriptions _ _ =
+subscriptions : Model -> Sub Msg
+subscriptions _ =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
-        , Time.every tickFrequency (\_ -> Tick) ]
-
+        , Time.every tickFrequency (\_ -> Tick)
+        ]
 
 
 str : Int -> String
@@ -301,8 +329,8 @@ str =
     String.fromInt
 
 
-view : AudioData -> Model -> Html Msg
-view _ model =
+view : Model -> Html Msg
+view model =
     case model of
         InactiveModel ->
             svg
@@ -311,7 +339,8 @@ view _ model =
                 , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
                 , Svg.Attributes.style "touch-action: none"
                 ]
-                [image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] [] ,text_ [ x "200", y "60", fontSize "32", Svg.Attributes.style "fill: white", onClick (StartClick) ] [ text "Click on 🐨 emoji to start" ]]
+                [ image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] [], text_ [ x "200", y "60", fontSize "32", Svg.Attributes.style "fill: white", onClick StartClick ] [ text "Click on 🐨 emoji to start" ] ]
+
         ActiveModel act_model ->
             svg
                 [ width "100%"
@@ -322,35 +351,59 @@ view _ model =
                 (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
                     :: List.map renderLeaf act_model.leaves
                     ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt act_model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-                    ++  displayKoala act_model
+                    ++ displayKoala act_model
                     -- A faster way would be to check primality once, instead of on every tick or every render
                     ++ (if isPrime act_model.score then
                             thinkPrime act_model.koala
 
                         else
                             []
-                    )
-                     ++ displayCredits act_model.credits
+                       )
+                    ++ displayCredits act_model.credits
                 )
-year = 19
 
-displayLine string height = text_ [ x "200", y (str height), fontSize "10", Svg.Attributes.style "fill: black" ] [ text string ]
 
-displayCredits credits = case credits of
-                             CreditsWithHeight h -> [
-                                                displayLine "Happy birthday!" (280+h),
-                                                displayLine "Credits" (300+h),
-                                                displayLine "Jing Wang: Artistic Director, Musician, Graphic Designer" (320+h),
-                                                displayLine "Theodore Ehrenborg: Programmer" (340+h),
-                                                displayLine "Lots learned from https://github.com/MartinSnyder/elm-snake" (360+h),
-                                                displayLine "Background sound from:" (380+h),
-                                                displayLine "\"Sunrise over the Australian Outback | Didgeridoo Music and Background Ambience\"" (400+h),
-                                                displayLine "https://youtu.be/h8dv8ykprf8" (420+h)]
-                             NoCredits -> []
+year =
+    19
+
+
+displayLine string height =
+    text_ [ x "200", y (str height), fontSize "10", Svg.Attributes.style "fill: black" ] [ text string ]
+
+
+displayCredits credits =
+    case credits of
+        CreditsWithHeight h ->
+            [ displayLine "Happy birthday!" (280 + h)
+            , displayLine "Credits" (300 + h)
+            , displayLine "Jing Wang: Artistic Director, Musician, Graphic Designer" (320 + h)
+            , displayLine "Theodore Ehrenborg: Programmer" (340 + h)
+            , displayLine "Lots learned from https://github.com/MartinSnyder/elm-snake" (360 + h)
+            , displayLine "Background sound from:" (380 + h)
+            , displayLine "\"Sunrise over the Australian Outback | Didgeridoo Music and Background Ambience\"" (400 + h)
+            , displayLine "https://youtu.be/h8dv8ykprf8" (420 + h)
+            ]
+
+        NoCredits ->
+            []
+
 
 renderLeaf : LeafPosition -> Html Msg
 renderLeaf pos =
-    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref (if pos.leafType == OneLeaf then "assets/1leaf.png" else "assets/2leaves.png") ] []
+    image
+        [ x (String.fromInt pos.x)
+        , y (String.fromInt pos.y)
+        , width "50px"
+        , height "auto"
+        , xlinkHref
+            (if pos.leafType == OneLeaf then
+                "assets/1leaf.png"
+
+             else
+                "assets/2leaves.png"
+            )
+        ]
+        []
 
 
 renderCircle : String -> Int -> Position -> Html Msg
@@ -362,9 +415,6 @@ renderCircle color radius pos =
         , fill color
         ]
         []
-
-
-
 
 
 thinkPrime : Position -> List (Html Msg)
@@ -388,11 +438,20 @@ keyDecoder : Decode.Decoder Msg
 keyDecoder =
     Decode.map toDirection (Decode.field "key" Decode.string)
 
+
 displayKoala act_model =
     -- Always display both images so that there's no flickering
     -- when loading the second image for the first time
-    let displayIt url = image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref url ] [] in
-    if act_model.mouthOpen then [displayIt "assets/koala_mouth_closed.png", displayIt "assets/koala_mouth_open.png"] else [displayIt "assets/koala_mouth_open.png", displayIt "assets/koala_mouth_closed.png"]
+    let
+        displayIt url =
+            image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref url ] []
+    in
+    if act_model.mouthOpen then
+        [ displayIt "assets/koala_mouth_closed.png", displayIt "assets/koala_mouth_open.png" ]
+
+    else
+        [ displayIt "assets/koala_mouth_open.png", displayIt "assets/koala_mouth_closed.png" ]
+
 
 isPrime : Int -> Bool
 isPrime n =
