@@ -39,8 +39,6 @@ type alias Size =
     { width : Int
     , height : Int
     }
--- Sunrise over the australian outback world exhibit
--- https://www.youtube.com/watch?v=h8dv8ykprf8
 
 gridSize : Size
 gridSize =
@@ -108,7 +106,10 @@ type alias AnActiveModel =
     , sound : Maybe Audio.Source
     , time: Maybe Time.Posix
     , mouthOpen: Bool
+    , credits : Credits
     }
+
+type Credits = NoCredits | CreditsWithHeight Int
 
 
 initActiveModel : ( Model, Cmd Msg , AudioCmd Msg)
@@ -120,6 +121,7 @@ initActiveModel =
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50)
       , time = Nothing
       , mouthOpen = False
+      , credits = NoCredits
       }
     , Cmd.none
     , Audio.cmdNone
@@ -209,16 +211,24 @@ update _ msg model =
                             act_model.score + length onScreenLeaves - length nonEatenLeaves
 
                         nextMouthOpen = (length unseenLeaves /= length nonEatenLeaves)
+                        justReachedYear = nextScore == year && act_model.score /= year
+                        nextCredits = if justReachedYear then CreditsWithHeight 200 else
+                                          case act_model.credits of
+                                              NoCredits -> NoCredits
+                                              CreditsWithHeight height -> CreditsWithHeight (height - 5)
+
+
                         nextModel =
                             { act_model
                                 | leaves = nonEatenLeaves
                                 , score = nextScore
                                 , mouthOpen = nextMouthOpen
                                 , gameTicks = act_model.gameTicks + 1
+                                , credits = nextCredits
                             }
                     in
                     ( ActiveModel nextModel
-                    , Cmd.batch [if modBy 10 act_model.gameTicks == 0 then generateLeaf else Cmd.none, if nextScore == year && act_model.score /= year then playFromElm "assets/happy_birthday.m4a" else Cmd.none, if act_model.score /= nextScore then playFromElm "assets/nom.wav" else Cmd.none]
+                    , Cmd.batch [if modBy 10 act_model.gameTicks == 0 then generateLeaf else Cmd.none, if justReachedYear then playFromElm "assets/happy_birthday.m4a" else Cmd.none, if act_model.score /= nextScore then playFromElm "assets/nom.wav" else Cmd.none]
                         , Audio.cmdNone
                     )
 
@@ -320,14 +330,23 @@ view _ model =
                         else
                             []
                     )
-                    ++ (if act_model.score >= year then
-                            [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ], text_ [ x "500", y "300", fontSize "10", Svg.Attributes.style "fill: white" ] [ text "Credits go here" ]]
-
-                        else
-                            []
-                    )
+                     ++ displayCredits act_model.credits
                 )
 year = 19
+
+displayLine string height = text_ [ x "200", y (str height), fontSize "10", Svg.Attributes.style "fill: black" ] [ text string ]
+
+displayCredits credits = case credits of
+                             CreditsWithHeight h -> [
+                                                displayLine "Happy birthday!" (280+h),
+                                                displayLine "Credits" (300+h),
+                                                displayLine "Jing Wang: Artistic director, musician, graphic designer" (320+h),
+                                                displayLine "Theodore Ehrenborg: Programmer" (340+h),
+                                                displayLine "Lots learned from https://github.com/MartinSnyder/elm-snake" (360+h),
+                                                displayLine "Background sound from:" (380+h),
+                                                displayLine "\"Sunrise over the Australian Outback | Didgeridoo Music and Background Ambience\"" (400+h),
+                                                displayLine "https://youtu.be/h8dv8ykprf8" (420+h)]
+                             NoCredits -> []
 
 renderLeaf : LeafPosition -> Html Msg
 renderLeaf pos =
@@ -346,8 +365,6 @@ renderCircle color radius pos =
 
 
 
--- Adapted from https://github.com/MartinSnyder/elm-snake
--- TODO Add credits in readme
 
 
 thinkPrime : Position -> List (Html Msg)
