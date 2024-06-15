@@ -102,6 +102,7 @@ type alias AnActiveModel =
     , koala : Position
     , sound : Maybe Audio.Source
     , time: Maybe Time.Posix
+    , mouthOpen: Bool
     }
 
 
@@ -113,6 +114,7 @@ initActiveModel =
         , sound = Nothing
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
       , time = Nothing
+      , mouthOpen = False
       }
     , Cmd.none
     , Audio.cmdNone
@@ -191,16 +193,21 @@ update _ msg model =
                         onScreenLeaves =
                             List.filter (\leaf -> leaf.y < gridSize.height * cellSize.height) movedLeaves
 
+                        unseenLeaves =
+                            List.filter (outOfSeeingRange act_model.koala) onScreenLeaves
+
                         nonEatenLeaves =
-                            List.filter (isFar act_model.koala) onScreenLeaves
+                            List.filter (outOfEatingRange act_model.koala) onScreenLeaves
 
                         nextScore =
                             act_model.score + length onScreenLeaves - length nonEatenLeaves
 
+                        nextMouthOpen = (length unseenLeaves /= length nonEatenLeaves)
                         nextModel =
                             { act_model
                                 | leaves = nonEatenLeaves
                                 , score = nextScore
+                                , mouthOpen = nextMouthOpen
                                 , gameTicks = act_model.gameTicks + 1
                             }
                     in
@@ -234,15 +241,15 @@ onScreen : Int -> Int
 onScreen x =
     min (max x screenLeft) screenRight
 
-
-isFar : Position -> Position -> Bool
-isFar koala leaf =
-    let
-        distance =
-            30
-    in
+outOfRange : Int -> Position -> Position -> Bool
+outOfRange distance koala leaf =
     abs (koala.x - leaf.x) > distance || abs (koala.y - leaf.y) > distance
 
+outOfEatingRange : Position -> Position -> Bool
+outOfEatingRange = outOfRange 30
+
+outOfSeeingRange : Position -> Position -> Bool
+outOfSeeingRange = outOfRange 100
 
 getShift : WhichKey -> Int
 getShift key =
@@ -304,7 +311,7 @@ view _ model =
                 (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
                     :: List.map renderLeaf act_model.leaves
                     ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt act_model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-                    ++ [ image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref "assets/koala_mouth_closed.png" ] [] ]
+                    ++ [ displayKoala act_model ]
                     -- A faster way would be to check primality once, instead of on every tick or every render
                     ++ (if isPrime act_model.score then
                             thinkPrime act_model.koala
@@ -363,6 +370,8 @@ keyDecoder : Decode.Decoder Msg
 keyDecoder =
     Decode.map toDirection (Decode.field "key" Decode.string)
 
+displayKoala act_model =
+    image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref (if act_model.mouthOpen then "assets/koala_mouth_open.png" else "assets/koala_mouth_closed.png") ] []
 
 isPrime : Int -> Bool
 isPrime n =
