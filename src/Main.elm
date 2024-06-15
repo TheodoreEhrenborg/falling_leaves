@@ -209,7 +209,7 @@ update _ msg model =
                         generateLeaf
 
                     else
-                        if nextScore == 2 && act_model.score /= 2 then playFromElm "assets/happy_birthday.m4a" else Cmd.none
+                        if nextScore == year && act_model.score /= year then playFromElm "assets/happy_birthday.m4a" else Cmd.none
                         , Audio.cmdNone
                     )
 
