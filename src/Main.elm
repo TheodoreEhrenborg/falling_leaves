@@ -177,7 +177,7 @@ update _ msg model =
                             )
 
                         Err err ->
-                            let _ = Debug.log "error" err in
+                            --let _ = Debug.log "error" err in
                                 ( model
                                 , Cmd.none
                                 , Audio.cmdNone
