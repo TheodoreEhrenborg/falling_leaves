@@ -3,8 +3,8 @@ port module Main exposing (LeafType, Model, Msg(..), Position, WhichKey(..), isP
 -- TODO Delete this
 
 import Audio exposing (Audio, AudioCmd, AudioData)
-import Browser.Events
 import Browser
+import Browser.Events
 import Html exposing (Html)
 import Json.Decode as Decode
 import List exposing (length)
@@ -175,7 +175,7 @@ applyGravity leaf =
     }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case model of
         InactiveModel ->
