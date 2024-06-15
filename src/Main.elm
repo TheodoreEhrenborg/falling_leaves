@@ -30,10 +30,7 @@ main =
                            }
 
 audio : AudioData -> Model -> Audio
-audio _ model =
-        case (model.sound, model.time) of
-           (Just a_sound, Just a_time) -> Audio.audio a_sound a_time
-           _ -> Audio.silence
+audio _ model = Audio.silence
 
 -- CONSTANTS
 
@@ -96,8 +93,9 @@ type alias Position =
     , y_vel : Int
     }
 
+type Model = ActiveModel AnActiveModel | InactiveModel
 
-type alias Model =
+type alias AnActiveModel =
     { gameTicks : Int
     , leaves : List Position
     , score : Int
@@ -107,23 +105,23 @@ type alias Model =
     }
 
 
-initGame : ( Model, Cmd Msg , AudioCmd Msg)
-initGame =
-    ( { gameTicks = 0
+initActiveModel : ( Model, Cmd Msg , AudioCmd Msg)
+initActiveModel =
+    ( ActiveModel { gameTicks = 0
       , leaves = []
       , score = 0
         , sound = Nothing
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
       , time = Nothing
       }
-    , Cmd.none
+    , playFromElm "assets/happy_birthday.m4a"
     , Audio.cmdNone
     )
 
 
-init : () -> ( Model, Cmd Msg ,AudioCmd Msg)
-init _ =
-    initGame
+init : () -> ( Model, Cmd Msg , AudioCmd Msg)
+init _ = (InactiveModel, Cmd.none, Audio.cmdNone)
+
 
 
 
@@ -136,6 +134,7 @@ type Msg
     | PlaceLeaf Int
     | SoundLoaded (Result Audio.LoadError Audio.Source)
     | HereComesAudioTime Time.Posix
+    | StartClick
 
 
 applyGravity : Position -> Position
@@ -153,73 +152,82 @@ applyGravity leaf =
     }
 
 
-update : AudioData -> Msg -> Model -> ( Model, Cmd Msg ,AudioCmd msg)
+update : AudioData -> Msg -> Model -> ( Model, Cmd Msg ,AudioCmd Msg)
 update _ msg model =
-    case msg of
-        HereComesAudioTime a_time -> ( { model | time = Just a_time }
-                    , Cmd.none
-                    , Audio.cmdNone
-                    )
-        SoundLoaded result ->
-            case result of
-                Ok sound ->
-                    ( { model | sound = Just sound }
-                    , Cmd.none
-                    , Audio.cmdNone
-                    )
+    case model of
+        InactiveModel ->
+            if msg == StartClick then
+                initActiveModel
+            else
+                (model, Cmd.none, Audio.cmdNone)
+        ActiveModel act_model ->
+            case msg of
+                HereComesAudioTime a_time -> ( ActiveModel { act_model | time = Just a_time }
+                            , Cmd.none
+                            , Audio.cmdNone
+                            )
+                SoundLoaded result->
+                    case result of
+                        Ok sound ->
+                            ( ActiveModel { act_model | sound = Just sound }
+                            , Cmd.none
+                            , Audio.cmdNone
+                            )
 
-                Err err ->
-                    let _ = Debug.log "error" err in
-                        ( model
-                        , Cmd.none
+                        Err err ->
+                            let _ = Debug.log "error" err in
+                                ( model
+                                , Cmd.none
+                                , Audio.cmdNone
+                                )
+
+
+                Tick ->
+                    let
+                        --foo = Debug.log "foo" model
+                        movedLeaves =
+                            List.map applyGravity act_model.leaves
+
+                        onScreenLeaves =
+                            List.filter (\leaf -> leaf.y < gridSize.height * cellSize.height) movedLeaves
+
+                        nonEatenLeaves =
+                            List.filter (isFar act_model.koala) onScreenLeaves
+
+                        nextScore =
+                            act_model.score + length onScreenLeaves - length nonEatenLeaves
+
+                        nextModel =
+                            { act_model
+                                | leaves = nonEatenLeaves
+                                , score = nextScore
+                                , gameTicks = act_model.gameTicks + 1
+                            }
+                    in
+                    ( ActiveModel nextModel
+                    , if modBy 10 act_model.gameTicks == 0 then
+                        generateLeaf
+
+                    else
+                        Cmd.none
                         , Audio.cmdNone
-                        )
+                    )
 
+                PlaceLeaf pos ->
+                    ( ActiveModel { act_model | leaves = Position pos 20 0 :: act_model.leaves }, Cmd.none , Audio.cmdNone)
 
-        Tick ->
-            let
-                --foo = Debug.log "foo" model
-                movedLeaves =
-                    List.map applyGravity model.leaves
+                StartClick ->
+                    ( model , Cmd.none , Audio.cmdNone)
+                Key whichKey ->
+                    let
+                        koala =
+                            act_model.koala
 
-                onScreenLeaves =
-                    List.filter (\leaf -> leaf.y < gridSize.height * cellSize.height) movedLeaves
-
-                nonEatenLeaves =
-                    List.filter (isFar model.koala) onScreenLeaves
-
-                nextScore =
-                    model.score + length onScreenLeaves - length nonEatenLeaves
-
-                nextModel =
-                    { model
-                        | leaves = nonEatenLeaves
-                        , score = nextScore
-                        , gameTicks = model.gameTicks + 1
-                    }
-            in
-            ( nextModel
-            , if modBy 10 model.gameTicks == 0 then
-                generateLeaf
-
-              else
-                Cmd.none
-                , Audio.cmdNone
-            )
-
-        PlaceLeaf pos ->
-            ( { model | leaves = Position pos 20 0 :: model.leaves }, Cmd.none , Audio.cmdNone)
-
-        Key whichKey ->
-            let
-                koala =
-                    model.koala
-
-                newKoala =
-                    { koala | x = onScreen (koala.x + getShift whichKey) }
-            in
-                -- This isn't enough---they have to click in order for it to go
-            ( { model | koala = newKoala }, playFromElm "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" ,Audio.cmdNone)
+                        newKoala =
+                            { koala | x = onScreen (koala.x + getShift whichKey) }
+                    in
+                        -- This isn't enough---they have to click in order for it to go
+                    ( ActiveModel { act_model | koala = newKoala }, Cmd.none ,Audio.cmdNone)
 
 
 onScreen : Int -> Int
@@ -266,12 +274,8 @@ subscriptions : AudioData -> Model -> Sub Msg
 subscriptions _ _ =
     Sub.batch
         [ Browser.Events.onKeyDown keyDecoder
-        , Time.every tickFrequency (\_ -> Tick)
-        ]
+        , Time.every tickFrequency (\_ -> Tick) ]
 
-
-
--- VIEW
 
 
 str : Int -> String
@@ -281,30 +285,40 @@ str =
 
 view : AudioData -> Model -> Html Msg
 view _ model =
-    svg
-        [ width "100%"
-        , height "auto"
-        , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
-        , Svg.Attributes.style "touch-action: none"
-        ]
-        (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
-            :: List.map renderLeaf model.leaves
-            ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
-            ++ [ image [ x (String.fromInt (model.koala.x - 75)), y (String.fromInt (model.koala.y - 80)), width "150px", height "150px", xlinkHref "assets/koala_mouth_closed.png" ] [] ]
-            -- A faster way would be to check primality once, instead of on every tick or every render
-            ++ (if isPrime model.score then
-                    thinkPrime model.koala
+    case model of
+        InactiveModel ->
+            svg
+                [ width "100%"
+                , height "auto"
+                , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
+                , Svg.Attributes.style "touch-action: none"
+                ]
+                [image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] [] ,text_ [ x "250", y "60", fontSize "32", Svg.Attributes.style "fill: white", onClick (StartClick) ] [ text "Click on 🐨 to start" ]]
+        ActiveModel act_model ->
+            svg
+                [ width "100%"
+                , height "auto"
+                , viewBox ("0 0 " ++ String.fromInt (gridSize.width * cellSize.width) ++ " " ++ String.fromInt (gridSize.height * cellSize.height))
+                , Svg.Attributes.style "touch-action: none"
+                ]
+                (image [ x (String.fromInt 0), y (String.fromInt 0), width (String.fromInt (gridSize.width * cellSize.width)), height (String.fromInt (gridSize.height * cellSize.height)), xlinkHref "assets/background.png" ] []
+                    :: List.map renderLeaf act_model.leaves
+                    ++ [ text_ [ x "120", y "20", Svg.Attributes.style "fill: white" ] [ text ("Score: " ++ String.fromInt act_model.score) ], text_ [ x "260", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key LeftArrow) ] [ text "←" ], text_ [ x "520", y "60", fontSize "96", Svg.Attributes.style "fill: white", onClick (Key RightArrow) ] [ text "→" ] ]
+                    ++ [ image [ x (String.fromInt (act_model.koala.x - 75)), y (String.fromInt (act_model.koala.y - 80)), width "150px", height "150px", xlinkHref "assets/koala_mouth_closed.png" ] [] ]
+                    -- A faster way would be to check primality once, instead of on every tick or every render
+                    ++ (if isPrime act_model.score then
+                            thinkPrime act_model.koala
 
-                else
-                    []
-               )
-            ++ (if model.score >= 19 then
-                    [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
+                        else
+                            []
+                    )
+                    ++ (if act_model.score >= 19 then
+                            [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
 
-                else
-                    []
-               )
-        )
+                        else
+                            []
+                    )
+                )
 
 
 renderLeaf : Position -> Html Msg
