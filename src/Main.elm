@@ -86,18 +86,23 @@ type WhichKey
     | RightArrow
     | OtherKey
 
+type alias LeafPosition =
+    { x : Int
+    , y : Int
+    , y_vel : Int
+    , leafType : LeafType
+    }
 
 type alias Position =
     { x : Int
     , y : Int
-    , y_vel : Int
     }
 
 type Model = ActiveModel AnActiveModel | InactiveModel
 
 type alias AnActiveModel =
     { gameTicks : Int
-    , leaves : List Position
+    , leaves : List LeafPosition
     , score : Int
     , koala : Position
     , sound : Maybe Audio.Source
@@ -112,7 +117,7 @@ initActiveModel =
       , leaves = []
       , score = 0
         , sound = Nothing
-      , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
+      , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50)
       , time = Nothing
       , mouthOpen = False
       }
@@ -133,13 +138,14 @@ init _ = (InactiveModel, Cmd.none, Audio.cmdNone)
 type Msg
     = Tick
     | Key WhichKey
-    | PlaceLeaf Int
+    | PlaceLeaf (Int, LeafType)
     | SoundLoaded (Result Audio.LoadError Audio.Source)
     | HereComesAudioTime Time.Posix
     | StartClick
 
+type LeafType = OneLeaf | TwoLeaves
 
-applyGravity : Position -> Position
+applyGravity : LeafPosition -> LeafPosition
 applyGravity leaf =
     let
         new_y =
@@ -220,8 +226,8 @@ update _ msg model =
                         , Audio.cmdNone
                     )
 
-                PlaceLeaf pos ->
-                    ( ActiveModel { act_model | leaves = Position pos 20 0 :: act_model.leaves }, Cmd.none , Audio.cmdNone)
+                PlaceLeaf (pos, leafType) ->
+                    ( ActiveModel { act_model | leaves = LeafPosition pos 20 0 leafType :: act_model.leaves }, Cmd.none , Audio.cmdNone)
 
                 StartClick ->
                     ( model , Cmd.none , Audio.cmdNone)
@@ -241,14 +247,14 @@ onScreen : Int -> Int
 onScreen x =
     min (max x screenLeft) screenRight
 
-outOfRange : Int -> Position -> Position -> Bool
+outOfRange : Int -> Position -> LeafPosition -> Bool
 outOfRange distance koala leaf =
     abs (koala.x - leaf.x) > distance || abs (koala.y - leaf.y) > distance
 
-outOfEatingRange : Position -> Position -> Bool
+outOfEatingRange : Position -> LeafPosition -> Bool
 outOfEatingRange = outOfRange 30
 
-outOfSeeingRange : Position -> Position -> Bool
+outOfSeeingRange : Position -> LeafPosition -> Bool
 outOfSeeingRange = outOfRange 100
 
 getShift : WhichKey -> Int
@@ -270,8 +276,7 @@ getShift key =
 
 generateLeaf : Cmd Msg
 generateLeaf =
-    Random.generate PlaceLeaf (Random.int screenLeft screenRight)
-
+    Random.generate PlaceLeaf (Random.pair (Random.int screenLeft screenRight) (Random.uniform OneLeaf [TwoLeaves]))
 
 
 -- SUBSCRIPTIONS
@@ -328,9 +333,9 @@ view _ model =
                 )
 year = 19
 
-renderLeaf : Position -> Html Msg
+renderLeaf : LeafPosition -> Html Msg
 renderLeaf pos =
-    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref "assets/2leaves.png" ] []
+    image [ x (String.fromInt pos.x), y (String.fromInt pos.y), width "50px", height "auto", xlinkHref (if pos.leafType == OneLeaf then "assets/1leaf.png" else "assets/2leaves.png") ] []
 
 
 renderCircle : String -> Int -> Position -> Html Msg
@@ -358,9 +363,9 @@ thinkPrime koala =
         y_offset =
             -30
     in
-    [ renderCircle "white" 5 (Position (koala.x - 10 + x_offset) (koala.y + y_offset) 0)
-    , renderCircle "white" 5 (Position (koala.x - 20 + x_offset) (koala.y - 10 + y_offset) 0)
-    , renderCircle "white" 10 (Position (koala.x - 30 + x_offset) (koala.y - 25 + y_offset) 0)
+    [ renderCircle "white" 5 (Position (koala.x - 10 + x_offset) (koala.y + y_offset))
+    , renderCircle "white" 5 (Position (koala.x - 20 + x_offset) (koala.y - 10 + y_offset))
+    , renderCircle "white" 10 (Position (koala.x - 30 + x_offset) (koala.y - 25 + y_offset))
     , ellipse [ cx (str (koala.x - 60 + x_offset)), cy (str (koala.y - 65 + y_offset)), rx (str 50), ry (str 30), fill "white" ] []
     , text_ [ x (str (koala.x - 100 + x_offset)), y (str (koala.y - 65 + y_offset)), Svg.Attributes.style "fill: black", fontSize "13" ] [ text "That's prime" ]
     ]
