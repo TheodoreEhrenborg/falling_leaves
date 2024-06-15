@@ -320,7 +320,7 @@ view _ model =
                             []
                     )
                     ++ (if act_model.score >= year then
-                            [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
+                            [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ], text_ [ x "500", y "300", fontSize "10", Svg.Attributes.style "fill: white" ] [ text "Credits go here" ]]
 
                         else
                             []
