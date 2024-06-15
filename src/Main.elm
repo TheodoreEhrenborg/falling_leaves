@@ -106,8 +106,6 @@ type alias AnActiveModel =
     , leaves : List LeafPosition
     , score : Int
     , koala : Position
-    , sound : Maybe Audio.Source
-    , time : Maybe Time.Posix
     , mouthOpen : Bool
     , credits : Credits
     }
@@ -124,9 +122,7 @@ initActiveModel =
         { gameTicks = 0
         , leaves = []
         , score = 0
-        , sound = Nothing
         , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50)
-        , time = Nothing
         , mouthOpen = False
         , credits = NoCredits
         }
