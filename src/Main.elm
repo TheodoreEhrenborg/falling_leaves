@@ -1,8 +1,6 @@
 port module Main exposing (LeafType, Model, Msg(..), Position, WhichKey(..), isPrime, main)
 
--- TODO Delete this
 
-import Audio exposing (Audio, AudioCmd, AudioData)
 import Browser
 import Browser.Events
 import Html exposing (Html)
@@ -18,6 +16,7 @@ import Time
 port playFromElm : String -> Cmd msg
 
 
+main: Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -26,10 +25,6 @@ main =
         , subscriptions = subscriptions
         }
 
-
-audio : AudioData -> Model -> Audio
-audio _ model =
-    Audio.silence
 
 
 
@@ -363,14 +358,17 @@ view model =
                 )
 
 
+year : Int
 year =
     19
 
 
+displayLine : String -> Int-> Html Msg
 displayLine string height =
     text_ [ x "200", y (str height), fontSize "10", Svg.Attributes.style "fill: black" ] [ text string ]
 
 
+displayCredits : Credits -> List (Html Msg)
 displayCredits credits =
     case credits of
         CreditsWithHeight h ->
@@ -439,6 +437,7 @@ keyDecoder =
     Decode.map toDirection (Decode.field "key" Decode.string)
 
 
+displayKoala : AnActiveModel -> List (Html Msg)
 displayKoala act_model =
     -- Always display both images so that there's no flickering
     -- when loading the second image for the first time
