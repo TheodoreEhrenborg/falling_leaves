@@ -114,7 +114,7 @@ initActiveModel =
       , koala = Position (gridSize.width * cellSize.width // 2) (gridSize.height * cellSize.height - 50) 0
       , time = Nothing
       }
-    , playFromElm "assets/happy_birthday.m4a"
+    , Cmd.none
     , Audio.cmdNone
     )
 
@@ -209,7 +209,7 @@ update _ msg model =
                         generateLeaf
 
                     else
-                        Cmd.none
+                        if nextScore == year && act_model.score /= year then playFromElm "assets/happy_birthday.m4a" else Cmd.none
                         , Audio.cmdNone
                     )
 
@@ -312,14 +312,14 @@ view _ model =
                         else
                             []
                     )
-                    ++ (if act_model.score >= 19 then
+                    ++ (if act_model.score >= year then
                             [ text_ [ x "300", y "200", Svg.Attributes.style "fill: white" ] [ text "Happy birthday!" ] ]
 
                         else
                             []
                     )
                 )
-
+year = 19
 
 renderLeaf : Position -> Html Msg
 renderLeaf pos =
