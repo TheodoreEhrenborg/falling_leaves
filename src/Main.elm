@@ -383,7 +383,7 @@ renderLeaf pos =
         [ x (String.fromInt pos.x)
         , y (String.fromInt pos.y)
         , width "50px"
-        , height "auto"
+        , height "50px"
         , xlinkHref
             (if pos.leafType == OneLeaf then
                 "assets/1leaf.png"
