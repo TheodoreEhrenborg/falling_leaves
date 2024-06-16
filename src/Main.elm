@@ -365,8 +365,8 @@ displayCredits credits =
         CreditsWithHeight h ->
             [ displayLine "Happy birthday!" (280 + h)
             , displayLine "Credits" (300 + h)
-            , displayLine "Jing Wang: Artistic Director, Musician, Graphic Designer" (320 + h)
-            , displayLine "Theodore Ehrenborg: Programmer" (340 + h)
+            , displayLine "Theodore Ehrenborg: Programmer, Sound Effects" (320 + h)
+            , displayLine "Jing Wang: Artistic Director, Musician, Graphic Designer" (340 + h)
             , displayLine "Lots learned from https://github.com/MartinSnyder/elm-snake" (360 + h)
             , displayLine "Background sound from:" (380 + h)
             , displayLine "\"Sunrise over the Australian Outback | Didgeridoo Music and Background Ambience\"" (400 + h)
